@@ -14,7 +14,7 @@ public class ValidationBehaviorTests
         var services = new ServiceCollection();
         services.AddMediator()
             .AddHandler<TestRequest, string, TestRequestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -30,7 +30,7 @@ public class ValidationBehaviorTests
         services.AddMediator()
             .AddHandler<TestRequest, string, TestRequestHandler>()
             .AddValidator<TestRequest, TestRequestValidator>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -46,11 +46,11 @@ public class ValidationBehaviorTests
         services.AddMediator()
             .AddHandler<TestRequest, string, TestRequestHandler>()
             .AddValidator<TestRequest, TestRequestValidator>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var exception = await Assert.ThrowsAsync<ValidationException>(() => 
+        var exception = await Assert.ThrowsAsync<ValidationException>(() =>
             mediator.SendAsync(new TestRequest { Value = "" }).AsTask());
 
         Assert.Single(exception.Errors);
@@ -65,12 +65,12 @@ public class ValidationBehaviorTests
             .AddHandler<TestRequest, string, TestRequestHandler>()
             .AddValidator<TestRequest, TestRequestValidator>()
             .AddValidator<TestRequest, SecondTestRequestValidator>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
         // Empty string fails NotEmpty, and also fails MinimumLength(3)
-        var exception = await Assert.ThrowsAsync<ValidationException>(() => 
+        var exception = await Assert.ThrowsAsync<ValidationException>(() =>
             mediator.SendAsync(new TestRequest { Value = "" }).AsTask());
 
         // Both validators should report errors
@@ -123,7 +123,7 @@ public class ValidationBehaviorTests
         services.AddMediator()
             .AddHandler<TestRequest, string, TestRequestHandler>()
             .AddValidator<TestRequest, CancellationTestValidator>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -176,7 +176,7 @@ public class ValidationBehaviorTests
         }
 
         public override Task<ValidationResult> ValidateAsync(
-            ValidationContext<TestRequest> context, 
+            ValidationContext<TestRequest> context,
             CancellationToken cancellation = default)
         {
             cancellation.ThrowIfCancellationRequested();

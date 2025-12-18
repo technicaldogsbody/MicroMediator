@@ -1,0 +1,41 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source code
+*.cs text eol=lf
+*.csx text eol=lf
+*.vb text eol=lf
+
+# Config files
+*.json text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.config text eol=lf
+*.props text eol=lf
+*.targets text eol=lf
+
+# Scripts
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Documentation
+*.md text eol=lf
+*.txt text eol=lf
+
+# Project files
+*.csproj text eol=lf
+*.sln text eol=crlf
+*.slnx text eol=lf
+
+# Binary files
+*.dll binary
+*.exe binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary

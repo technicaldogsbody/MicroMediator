@@ -20,10 +20,10 @@ public class ColdStartBenchmarks
         services
             .AddMediator()
             .AddHandler<ColdStartQuery, int, ColdStartQueryHandler>();
-        
+
         using var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
-        
+
         return await mediator.SendAsync(new ColdStartQuery { Value = 42 });
     }
 
@@ -33,10 +33,10 @@ public class ColdStartBenchmarks
         // Setup and execute first request (cold start)
         var services = new ServiceCollection();
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ColdStartBenchmarks>());
-        
+
         using var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<MediatR.IMediator>();
-        
+
         return await mediator.Send(new MediatrColdStartQuery { Value = 42 });
     }
 

@@ -16,7 +16,7 @@ public class LoggingBehaviorTests
         services.AddMediator()
             .AddHandler<TestRequest, string, TestRequestHandler>()
             .AddDefaultLoggingPipeline();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -37,11 +37,11 @@ public class LoggingBehaviorTests
         services.AddMediator()
             .AddHandler<ThrowingRequest, string, ThrowingRequestHandler>()
             .AddDefaultLoggingPipeline();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => 
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
             mediator.SendAsync(new ThrowingRequest()).AsTask());
 
         Assert.Equal(2, logger.LogCount);
@@ -58,7 +58,7 @@ public class LoggingBehaviorTests
         services.AddMediator()
             .AddHandler<SlowRequest, string, SlowRequestHandler>()
             .AddDefaultLoggingPipeline();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -126,10 +126,10 @@ public class LoggingBehaviorTests
         public bool IsEnabled(LogLevel logLevel) => true;
 
         public void Log<TState>(
-            LogLevel logLevel, 
-            EventId eventId, 
-            TState state, 
-            Exception? exception, 
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
             Func<TState, Exception?, string> formatter)
         {
             LogCount++;

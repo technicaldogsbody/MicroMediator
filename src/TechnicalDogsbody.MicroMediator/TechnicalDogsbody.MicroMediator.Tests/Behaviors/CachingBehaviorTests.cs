@@ -15,7 +15,7 @@ public class CachingBehaviorTests
         services.AddMediator()
             .AddHandler<NonCacheableRequest, string, NonCacheableRequestHandler>()
             .AddDefaultCachingPipeline();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -32,7 +32,7 @@ public class CachingBehaviorTests
         services.AddMediator()
             .AddHandler<CacheableRequest, string, CacheableRequestHandler>()
             .AddDefaultCachingPipeline();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
         var cache = provider.GetRequiredService<IMemoryCache>();
@@ -52,14 +52,14 @@ public class CachingBehaviorTests
         services.AddMediator()
             .AddHandler<CacheableRequest, string, CacheableRequestHandler>()
             .AddDefaultCachingPipeline();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
         string result = await mediator.SendAsync(new CacheableRequest { Value = "test" });
 
         Assert.Equal("Handled: test", result);
-        
+
         // TODO: Investigate why caching behavior doesn't cache results
         // The behavior is registered but cache.TryGetValue returns false after first call
     }
@@ -72,7 +72,7 @@ public class CachingBehaviorTests
         services.AddMediator()
             .AddHandler<CacheableRequest, string, CacheableRequestHandler>()
             .AddDefaultCachingPipeline();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -91,7 +91,7 @@ public class CachingBehaviorTests
         services.AddMediator()
             .AddHandler<CustomDurationRequest, string, CustomDurationRequestHandler>()
             .AddDefaultCachingPipeline();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 

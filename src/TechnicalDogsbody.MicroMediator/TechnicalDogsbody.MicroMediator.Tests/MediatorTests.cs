@@ -12,7 +12,7 @@ public class MediatorTests
         var services = new ServiceCollection();
         services.AddMediator()
             .AddHandler<TestRequest, string, TestRequestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -26,11 +26,11 @@ public class MediatorTests
     {
         var services = new ServiceCollection();
         services.AddMediator();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() => 
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             mediator.SendAsync<string>(null!).AsTask());
     }
 
@@ -39,11 +39,11 @@ public class MediatorTests
     {
         var services = new ServiceCollection();
         services.AddMediator();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             mediator.SendAsync(new TestRequest { Value = "test" }).AsTask());
 
         Assert.Contains("No handler registered", exception.Message);
@@ -56,7 +56,7 @@ public class MediatorTests
         var services = new ServiceCollection();
         services.AddMediator()
             .AddHandler<TestRequest, string, TestRequestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 

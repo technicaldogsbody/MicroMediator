@@ -1,0 +1,51 @@
+name: Auto Format Code
+
+on:
+  workflow_dispatch:
+  
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx
+    
+    - name: Format code
+      run: dotnet format src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx --verbosity diagnostic
+    
+    - name: Check for changes
+      id: changes
+      run: |
+        $hasChanges = git status --porcelain
+        if ($hasChanges) {
+          echo "HAS_CHANGES=true" >> $env:GITHUB_OUTPUT
+          echo "Code formatting changes detected"
+        } else {
+          echo "HAS_CHANGES=false" >> $env:GITHUB_OUTPUT
+          echo "No formatting changes needed"
+        }
+      shell: pwsh
+    
+    - name: Commit and push changes
+      if: steps.changes.outputs.HAS_CHANGES == 'true'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        git commit -m "chore: auto-format code"
+        git push

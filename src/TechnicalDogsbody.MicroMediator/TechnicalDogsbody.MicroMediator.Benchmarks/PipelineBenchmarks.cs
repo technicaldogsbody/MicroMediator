@@ -34,7 +34,7 @@ public class PipelineBenchmarks
             .AddHandler<ValidatedQueryHandler>()
             .AddValidator<ValidatedQueryValidator>()
             .AddDefaultLoggingPipeline();
-        
+
         _simpleMediatorProvider = simpleServices.BuildServiceProvider();
         _simpleMediator = _simpleMediatorProvider.GetRequiredService<IMediator>();
 
@@ -46,7 +46,7 @@ public class PipelineBenchmarks
         mediatrServices.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<PipelineBenchmarks>());
         mediatrServices.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(MediatrValidationBehavior<,>));
         mediatrServices.AddTransient<IValidator<MediatrValidatedQuery>, MediatrValidatedQueryValidator>();
-        
+
         _mediatrProvider = mediatrServices.BuildServiceProvider();
         _mediatr = _mediatrProvider.GetRequiredService<MediatR.IMediator>();
     }
@@ -128,7 +128,7 @@ public class PipelineBenchmarks
         public async Task<TResponse> Handle(TRequest request, MediatR.RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
             var validators = _validators.ToArray();
-            
+
             if (validators.Length == 0)
             {
                 return await next();

@@ -12,7 +12,7 @@ public class ConcurrencyTests
         var services = new ServiceCollection();
         services.AddMediator()
             .AddHandler<TestRequest, int, TestRequestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -33,7 +33,7 @@ public class ConcurrencyTests
         services.AddMediator()
             .AddHandler<FirstRequest, string, FirstRequestHandler>()
             .AddHandler<SecondRequest, int, SecondRequestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -53,7 +53,7 @@ public class ConcurrencyTests
         var services = new ServiceCollection();
         services.AddMediator()
             .AddHandler<CancellableRequest, string, CancellableRequestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -62,7 +62,7 @@ public class ConcurrencyTests
 
         var exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             mediator.SendAsync(new CancellableRequest(), cts.Token).AsTask());
-        
+
         Assert.True(exception is TaskCanceledException or OperationCanceledException);
     }
 
@@ -72,7 +72,7 @@ public class ConcurrencyTests
         var services = new ServiceCollection();
         services.AddMediator()
             .AddHandler<TestRequest, int, TestRequestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -89,7 +89,7 @@ public class ConcurrencyTests
         var services = new ServiceCollection();
         services.AddMediator()
             .AddHandler<SyncRequest, string, SyncRequestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 

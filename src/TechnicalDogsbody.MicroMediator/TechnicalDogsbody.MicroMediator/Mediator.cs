@@ -56,7 +56,7 @@ file static class RequestDispatcher<TResponse>
         CancellationToken cancellationToken)
     {
         var requestType = request.GetType();
-        
+
         // Lock-free read from concurrent dictionary
         var wrapper = _cache.GetOrAdd(requestType, static rt =>
         {
@@ -136,7 +136,7 @@ file sealed class RequestHandlerWrapperImpl<TRequest, TResponse> : RequestHandle
         var behaviorList = provider.GetServices<IPipelineBehavior<TRequest, TResponse>>().ToArray();
         Array.Reverse(behaviorList);
         _cachedBehaviors = behaviorList;
-        
+
         _initialized = true;
     }
 
@@ -148,7 +148,7 @@ file sealed class RequestHandlerWrapperImpl<TRequest, TResponse> : RequestHandle
         CancellationToken cancellationToken)
     {
         // Build pipeline delegate chain
-        RequestHandlerDelegate<TResponse> handlerDelegate = () => 
+        RequestHandlerDelegate<TResponse> handlerDelegate = () =>
             handler.HandleAsync(request, cancellationToken);
 
         // Reverse iteration to build pipeline from innermost to outermost

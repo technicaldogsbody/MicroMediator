@@ -10,7 +10,7 @@ namespace TechnicalDogsbody.MicroMediator.Behaviors;
 /// </summary>
 /// <typeparam name="TRequest">The type of request being validated.</typeparam>
 /// <typeparam name="TResponse">The type of response.</typeparam>
-public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators) 
+public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {

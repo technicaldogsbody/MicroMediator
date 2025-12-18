@@ -12,7 +12,7 @@ public class PipelineBehaviorTests
         var services = new ServiceCollection();
         services.AddMediator()
             .AddHandler<SimpleRequest, string, SimpleRequestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -28,7 +28,7 @@ public class PipelineBehaviorTests
         services.AddMediator()
             .AddHandler<TestBehaviorRequest, string, TestBehaviorRequestHandler>()
             .AddBehavior(typeof(TestBehavior<,>));
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -45,7 +45,7 @@ public class PipelineBehaviorTests
             .AddHandler<MultiBehaviorRequest, string, MultiBehaviorRequestHandler>()
             .AddBehavior(typeof(FirstBehavior<,>))
             .AddBehavior(typeof(SecondBehavior<,>));
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -62,11 +62,11 @@ public class PipelineBehaviorTests
         services.AddMediator()
             .AddHandler<ExceptionRequest, string, ExceptionRequestHandler>()
             .AddBehavior(typeof(ExceptionBehavior<,>));
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => 
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
             mediator.SendAsync(new ExceptionRequest()).AsTask());
     }
 
@@ -77,7 +77,7 @@ public class PipelineBehaviorTests
         services.AddMediator()
             .AddHandler<ShortCircuitRequest, string, ShortCircuitRequestHandler>()
             .AddBehavior(typeof(ShortCircuitBehavior<,>));
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
@@ -151,8 +151,8 @@ public class PipelineBehaviorTests
         where TRequest : IRequest<TResponse>
     {
         public async ValueTask<TResponse> HandleAsync(
-            TRequest request, 
-            RequestHandlerDelegate<TResponse> next, 
+            TRequest request,
+            RequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken)
         {
             var result = await next();
@@ -165,8 +165,8 @@ public class PipelineBehaviorTests
         where TRequest : IRequest<TResponse>
     {
         public async ValueTask<TResponse> HandleAsync(
-            TRequest request, 
-            RequestHandlerDelegate<TResponse> next, 
+            TRequest request,
+            RequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken)
         {
             var result = await next();
@@ -179,8 +179,8 @@ public class PipelineBehaviorTests
         where TRequest : IRequest<TResponse>
     {
         public async ValueTask<TResponse> HandleAsync(
-            TRequest request, 
-            RequestHandlerDelegate<TResponse> next, 
+            TRequest request,
+            RequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken)
         {
             var result = await next();
@@ -193,8 +193,8 @@ public class PipelineBehaviorTests
         where TRequest : IRequest<TResponse>
     {
         public ValueTask<TResponse> HandleAsync(
-            TRequest request, 
-            RequestHandlerDelegate<TResponse> next, 
+            TRequest request,
+            RequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken)
         {
             throw new InvalidOperationException("Behavior exception");
@@ -206,8 +206,8 @@ public class PipelineBehaviorTests
         where TRequest : IRequest<TResponse>
     {
         public ValueTask<TResponse> HandleAsync(
-            TRequest request, 
-            RequestHandlerDelegate<TResponse> next, 
+            TRequest request,
+            RequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken)
         {
             return ValueTask.FromResult((TResponse)(object)"ShortCircuit");

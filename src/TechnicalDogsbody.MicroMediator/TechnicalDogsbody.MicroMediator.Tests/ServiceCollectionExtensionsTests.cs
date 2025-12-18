@@ -13,12 +13,12 @@ public class ServiceCollectionExtensionsTests
     public void AddMediator_RegistersIMediator()
     {
         var services = new ServiceCollection();
-        
+
         services.AddMediator();
-        
+
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetService<IMediator>();
-        
+
         Assert.NotNull(mediator);
     }
 
@@ -26,7 +26,7 @@ public class ServiceCollectionExtensionsTests
     public void AddMediator_WithNullServices_ThrowsArgumentNullException()
     {
         IServiceCollection services = null!;
-        
+
         Assert.Throws<ArgumentNullException>(() => services.AddMediator());
     }
 
@@ -34,13 +34,13 @@ public class ServiceCollectionExtensionsTests
     public void AddHandler_GenericInference_RegistersHandler()
     {
         var services = new ServiceCollection();
-        
+
         services.AddMediator()
             .AddHandler<TestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var handler = provider.GetService<IRequestHandler<TestRequest, string>>();
-        
+
         Assert.NotNull(handler);
     }
 
@@ -48,13 +48,13 @@ public class ServiceCollectionExtensionsTests
     public void AddHandler_ExplicitTypes_RegistersHandler()
     {
         var services = new ServiceCollection();
-        
+
         services.AddMediator()
             .AddHandler<TestRequest, string, TestHandler>();
-        
+
         var provider = services.BuildServiceProvider();
         var handler = provider.GetService<IRequestHandler<TestRequest, string>>();
-        
+
         Assert.NotNull(handler);
     }
 
@@ -62,7 +62,7 @@ public class ServiceCollectionExtensionsTests
     public void AddHandler_NonHandler_ThrowsInvalidOperationException()
     {
         var services = new ServiceCollection();
-        
+
         var exception = Assert.Throws<InvalidOperationException>(() =>
             services.AddMediator().AddHandler<NotAHandler>());
 
@@ -73,7 +73,7 @@ public class ServiceCollectionExtensionsTests
     public void AddHandler_MultipleInterfaces_ThrowsInvalidOperationException()
     {
         var services = new ServiceCollection();
-        
+
         var exception = Assert.Throws<InvalidOperationException>(() =>
             services.AddMediator().AddHandler<MultipleInterfaceHandler>());
 
@@ -84,13 +84,13 @@ public class ServiceCollectionExtensionsTests
     public void AddValidator_GenericInference_RegistersValidator()
     {
         var services = new ServiceCollection();
-        
+
         services.AddMediator()
             .AddValidator<TestValidator>();
-        
+
         var provider = services.BuildServiceProvider();
         var validator = provider.GetService<IValidator<TestRequest>>();
-        
+
         Assert.NotNull(validator);
     }
 
@@ -98,13 +98,13 @@ public class ServiceCollectionExtensionsTests
     public void AddValidator_ExplicitTypes_RegistersValidator()
     {
         var services = new ServiceCollection();
-        
+
         services.AddMediator()
             .AddValidator<TestRequest, TestValidator>();
-        
+
         var provider = services.BuildServiceProvider();
         var validator = provider.GetService<IValidator<TestRequest>>();
-        
+
         Assert.NotNull(validator);
     }
 
@@ -112,13 +112,13 @@ public class ServiceCollectionExtensionsTests
     public void AddValidator_FirstValidator_AddsValidationBehavior()
     {
         var services = new ServiceCollection();
-        
+
         services.AddMediator()
             .AddValidator<TestValidator>();
-        
+
         var provider = services.BuildServiceProvider();
         var behaviors = provider.GetServices<IPipelineBehavior<TestRequest, string>>();
-        
+
         Assert.Single(behaviors);
     }
 
@@ -126,14 +126,14 @@ public class ServiceCollectionExtensionsTests
     public void AddValidator_SecondValidator_DoesNotAddDuplicateBehavior()
     {
         var services = new ServiceCollection();
-        
+
         services.AddMediator()
             .AddValidator<TestValidator>()
             .AddValidator<SecondTestValidator>();
-        
+
         var provider = services.BuildServiceProvider();
         var behaviors = provider.GetServices<IPipelineBehavior<TestRequest, string>>();
-        
+
         Assert.Single(behaviors);
     }
 
@@ -141,7 +141,7 @@ public class ServiceCollectionExtensionsTests
     public void AddValidator_NonValidator_ThrowsInvalidOperationException()
     {
         var services = new ServiceCollection();
-        
+
         var exception = Assert.Throws<InvalidOperationException>(() =>
             services.AddMediator().AddValidator<NotAValidator>());
 
@@ -152,7 +152,7 @@ public class ServiceCollectionExtensionsTests
     public void AddValidator_MultipleInterfaces_ThrowsInvalidOperationException()
     {
         var services = new ServiceCollection();
-        
+
         var exception = Assert.Throws<InvalidOperationException>(() =>
             services.AddMediator().AddValidator<MultipleInterfaceValidator>());
 
@@ -164,13 +164,13 @@ public class ServiceCollectionExtensionsTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        
+
         services.AddMediator()
             .AddDefaultLoggingPipeline();
-        
+
         var provider = services.BuildServiceProvider();
         var behaviors = provider.GetServices<IPipelineBehavior<TestRequest, string>>();
-        
+
         Assert.Single(behaviors);
     }
 
@@ -178,14 +178,14 @@ public class ServiceCollectionExtensionsTests
     public void AddDefaultCachingPipeline_RegistersCachingBehaviorAndMemoryCache()
     {
         var services = new ServiceCollection();
-        
+
         services.AddMediator()
             .AddDefaultCachingPipeline();
-        
+
         var provider = services.BuildServiceProvider();
         var cache = provider.GetService<IMemoryCache>();
         var behaviors = provider.GetServices<IPipelineBehavior<TestRequest, string>>();
-        
+
         Assert.NotNull(cache);
         Assert.Single(behaviors);
     }
@@ -194,13 +194,13 @@ public class ServiceCollectionExtensionsTests
     public void AddBehavior_WithValidType_RegistersBehavior()
     {
         var services = new ServiceCollection();
-        
+
         services.AddMediator()
             .AddBehavior(typeof(CustomBehavior<,>));
-        
+
         var provider = services.BuildServiceProvider();
         var behaviors = provider.GetServices<IPipelineBehavior<TestRequest, string>>();
-        
+
         Assert.Single(behaviors);
     }
 
@@ -208,7 +208,7 @@ public class ServiceCollectionExtensionsTests
     public void AddBehavior_WithNullType_ThrowsArgumentNullException()
     {
         var services = new ServiceCollection();
-        
+
         Assert.Throws<ArgumentNullException>(() =>
             services.AddMediator().AddBehavior(null!));
     }
@@ -232,7 +232,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [ExcludeFromCodeCoverage]
-    private class MultipleInterfaceHandler : 
+    private class MultipleInterfaceHandler :
         IRequestHandler<TestRequest, string>,
         IRequestHandler<SecondRequest, int>
     {
@@ -269,7 +269,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [ExcludeFromCodeCoverage]
-    private class MultipleInterfaceValidator : 
+    private class MultipleInterfaceValidator :
         AbstractValidator<TestRequest>,
         IValidator<SecondRequest>
     {
@@ -307,8 +307,8 @@ public class ServiceCollectionExtensionsTests
         where TRequest : IRequest<TResponse>
     {
         public async ValueTask<TResponse> HandleAsync(
-            TRequest request, 
-            RequestHandlerDelegate<TResponse> next, 
+            TRequest request,
+            RequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken)
         {
             return await next();

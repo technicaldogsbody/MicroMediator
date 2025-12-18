@@ -50,7 +50,7 @@ public class SearchProductsQueryHandler(ILogger<SearchProductsQueryHandler> logg
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
-            query = query.Where(p => 
+            query = query.Where(p =>
                 p.Name.Contains(request.SearchTerm, StringComparison.OrdinalIgnoreCase) ||
                 p.Description.Contains(request.SearchTerm, StringComparison.OrdinalIgnoreCase));
         }

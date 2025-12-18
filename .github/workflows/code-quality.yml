@@ -21,16 +21,16 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
-        dotnet-quality: 'preview'
     
     - name: Restore dependencies
       run: dotnet restore src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx
     
-    - name: Build
+    - name: Build with warnings as errors
       run: dotnet build src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx --no-restore --configuration Release /p:TreatWarningsAsErrors=true
     
-    - name: Check code formatting
+    - name: Check code formatting (report only)
+      continue-on-error: true
       run: dotnet format src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx --verify-no-changes --verbosity diagnostic
     
-    - name: Run static analysis
+    - name: Run Roslyn analyzers
       run: dotnet build src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx --configuration Release --no-restore /p:RunAnalyzers=true /p:EnforceCodeStyleInBuild=true

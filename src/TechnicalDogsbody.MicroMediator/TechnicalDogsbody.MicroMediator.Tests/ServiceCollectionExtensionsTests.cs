@@ -31,6 +31,15 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
+    public void MediatorBuilder_WithNullServices_ThrowsArgumentNullException()
+    {
+        IServiceCollection services = null!;
+        
+        var exception = Assert.Throws<ArgumentNullException>(() => new MediatorBuilder(services));
+        Assert.Equal("services", exception.ParamName);
+    }
+
+    [Fact]
     public void AddHandler_GenericInference_RegistersHandler()
     {
         var services = new ServiceCollection();
@@ -78,6 +87,20 @@ public class ServiceCollectionExtensionsTests
             services.AddMediator().AddHandler<MultipleInterfaceHandler>());
 
         Assert.Contains("implements multiple IRequestHandler interfaces", exception.Message);
+    }
+
+    [Fact]
+    public void AddHandler_WithNonGenericInterfaces_IgnoresThemAndRegistersCorrectly()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddHandler<HandlerWithNonGenericInterface>();
+
+        var provider = services.BuildServiceProvider();
+        var handler = provider.GetService<IRequestHandler<TestRequest, string>>();
+
+        Assert.NotNull(handler);
     }
 
     [Fact]
@@ -249,6 +272,17 @@ public class ServiceCollectionExtensionsTests
 
     [ExcludeFromCodeCoverage]
     private class NotAHandler { }
+
+    [ExcludeFromCodeCoverage]
+    private class HandlerWithNonGenericInterface : IRequestHandler<TestRequest, string>, IDisposable
+    {
+        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken)
+        {
+            return ValueTask.FromResult("test");
+        }
+
+        public void Dispose() { }
+    }
 
     [ExcludeFromCodeCoverage]
     private class TestValidator : AbstractValidator<TestRequest>

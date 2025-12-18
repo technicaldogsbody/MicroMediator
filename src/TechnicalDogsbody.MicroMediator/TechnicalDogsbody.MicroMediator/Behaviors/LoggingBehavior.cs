@@ -33,7 +33,7 @@ public sealed partial class LoggingBehavior<TRequest, TResponse> : IPipelineBeha
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var requestName = typeof(TRequest).Name;
+        string requestName = typeof(TRequest).Name;
         var stopwatch = Stopwatch.StartNew();
 
         LogHandlingRequest(_logger, requestName);

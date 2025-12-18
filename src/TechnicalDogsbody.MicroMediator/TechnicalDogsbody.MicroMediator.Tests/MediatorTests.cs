@@ -16,7 +16,7 @@ public class MediatorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new TestRequest { Value = "test" });
+        string result = await mediator.SendAsync(new TestRequest { Value = "test" });
 
         Assert.Equal("Handled: test", result);
     }
@@ -60,8 +60,8 @@ public class MediatorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result1 = await mediator.SendAsync(new TestRequest { Value = "test1" });
-        var result2 = await mediator.SendAsync(new TestRequest { Value = "test2" });
+        string result1 = await mediator.SendAsync(new TestRequest { Value = "test1" });
+        string result2 = await mediator.SendAsync(new TestRequest { Value = "test2" });
 
         Assert.Equal("Handled: test1", result1);
         Assert.Equal("Handled: test2", result2);

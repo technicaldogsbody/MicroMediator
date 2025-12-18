@@ -86,7 +86,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
     private readonly ILogger<CreateOrderCommandHandler> _logger;
 
     // Simulated product database
-    private static readonly Dictionary<int, (string Name, decimal Price, int Stock)> Products = new()
+    private static readonly Dictionary<int, (string Name, decimal Price, int Stock)> _products = new()
     {
         { 1, ("Laptop", 1299.99m, 15) },
         { 2, ("Wireless Mouse", 29.99m, 50) },
@@ -110,7 +110,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
         // Validate product availability
         foreach (var item in request.Items)
         {
-            if (!Products.TryGetValue(item.ProductId, out var product))
+            if (!_products.TryGetValue(item.ProductId, out var product))
             {
                 return OrderResult.Failed($"Product {item.ProductId} not found");
             }
@@ -124,14 +124,14 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
         // Calculate total
         decimal totalAmount = request.Items.Sum(item =>
         {
-            var (_, price, _) = Products[item.ProductId];
+            (_, decimal price, _) = _products[item.ProductId];
             return price * item.Quantity;
         });
 
         // Simulate database operation
         await Task.Delay(200, cancellationToken);
 
-        var orderId = Interlocked.Increment(ref _nextOrderId);
+        int orderId = Interlocked.Increment(ref _nextOrderId);
 
         _logger.LogInformation("Order {OrderId} created successfully. Total: {TotalAmount:C}", orderId, totalAmount);
 

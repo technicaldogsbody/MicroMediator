@@ -49,22 +49,24 @@ public class ThroughputBenchmarks
     [Benchmark(Baseline = true)]
     public async Task<int> SimpleMediator_Sequential()
     {
-        var total = 0;
+        int total = 0;
         for (int i = 0; i < RequestCount; i++)
         {
             total += await _simpleMediator.SendAsync(new ThroughputQuery { Value = i });
         }
+
         return total;
     }
 
     [Benchmark]
     public async Task<int> MediatR_Sequential()
     {
-        var total = 0;
+        int total = 0;
         for (int i = 0; i < RequestCount; i++)
         {
             total += await _mediatr.Send(new MediatrThroughputQuery { Value = i });
         }
+
         return total;
     }
 
@@ -74,10 +76,11 @@ public class ThroughputBenchmarks
         var tasks = new Task<int>[RequestCount];
         for (int i = 0; i < RequestCount; i++)
         {
-            var value = i;
+            int value = i;
             tasks[i] = _simpleMediator.SendAsync(new ThroughputQuery { Value = value }).AsTask();
         }
-        var results = await Task.WhenAll(tasks);
+
+        int[] results = await Task.WhenAll(tasks);
         return results.Sum();
     }
 
@@ -87,10 +90,11 @@ public class ThroughputBenchmarks
         var tasks = new Task<int>[RequestCount];
         for (int i = 0; i < RequestCount; i++)
         {
-            var value = i;
+            int value = i;
             tasks[i] = _mediatr.Send(new MediatrThroughputQuery { Value = value });
         }
-        var results = await Task.WhenAll(tasks);
+
+        int[] results = await Task.WhenAll(tasks);
         return results.Sum();
     }
 

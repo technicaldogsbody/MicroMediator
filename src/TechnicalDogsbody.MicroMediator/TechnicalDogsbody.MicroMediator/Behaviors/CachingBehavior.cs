@@ -30,7 +30,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(IMemoryCache cache) : I
             return await next();
         }
 
-        var cacheKey = cacheableRequest.CacheKey;
+        string cacheKey = cacheableRequest.CacheKey;
 
         // FAST PATH: Cache hit - return synchronously completed ValueTask (zero allocation!)
         if (_cache.TryGetValue(cacheKey, out TResponse? cachedResponse) && cachedResponse is not null)

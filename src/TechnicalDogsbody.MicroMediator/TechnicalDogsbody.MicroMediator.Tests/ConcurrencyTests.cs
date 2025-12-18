@@ -20,7 +20,7 @@ public class ConcurrencyTests
             .Select(i => mediator.SendAsync(new TestRequest { Value = i }))
             .ToArray();
 
-        var results = await Task.WhenAll(tasks.Select(t => t.AsTask()));
+        int[] results = await Task.WhenAll(tasks.Select(t => t.AsTask()));
 
         Assert.Equal(100, results.Length);
         Assert.All(results, r => Assert.True(r >= 0 && r < 100));
@@ -40,8 +40,8 @@ public class ConcurrencyTests
         var task1 = mediator.SendAsync(new FirstRequest());
         var task2 = mediator.SendAsync(new SecondRequest());
 
-        var result1 = await task1;
-        var result2 = await task2;
+        string result1 = await task1;
+        int result2 = await task2;
 
         Assert.Equal("First", result1);
         Assert.Equal(42, result2);
@@ -78,7 +78,7 @@ public class ConcurrencyTests
 
         for (int i = 0; i < 10; i++)
         {
-            var result = await mediator.SendAsync(new TestRequest { Value = i });
+            int result = await mediator.SendAsync(new TestRequest { Value = i });
             Assert.Equal(i, result);
         }
     }
@@ -93,7 +93,7 @@ public class ConcurrencyTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new SyncRequest());
+        string result = await mediator.SendAsync(new SyncRequest());
 
         Assert.Equal("Sync", result);
     }

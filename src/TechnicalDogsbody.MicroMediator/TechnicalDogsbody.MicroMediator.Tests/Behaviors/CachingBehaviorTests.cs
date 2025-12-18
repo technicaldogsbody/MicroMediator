@@ -19,7 +19,7 @@ public class CachingBehaviorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new NonCacheableRequest { Value = "test" });
+        string result = await mediator.SendAsync(new NonCacheableRequest { Value = "test" });
 
         Assert.Equal("Handled: test", result);
     }
@@ -37,7 +37,7 @@ public class CachingBehaviorTests
         var mediator = provider.GetRequiredService<IMediator>();
         var cache = provider.GetRequiredService<IMemoryCache>();
 
-        var result = await mediator.SendAsync(new CacheableRequest { Value = "test" });
+        string result = await mediator.SendAsync(new CacheableRequest { Value = "test" });
 
         Assert.Equal("Handled: test", result);
         Assert.True(cache.TryGetValue("CacheKey-test", out string? cachedValue));
@@ -56,7 +56,7 @@ public class CachingBehaviorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new CacheableRequest { Value = "test" });
+        string result = await mediator.SendAsync(new CacheableRequest { Value = "test" });
 
         Assert.Equal("Handled: test", result);
         
@@ -76,8 +76,8 @@ public class CachingBehaviorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result1 = await mediator.SendAsync(new CacheableRequest { Value = "test1" });
-        var result2 = await mediator.SendAsync(new CacheableRequest { Value = "test2" });
+        string result1 = await mediator.SendAsync(new CacheableRequest { Value = "test1" });
+        string result2 = await mediator.SendAsync(new CacheableRequest { Value = "test2" });
 
         Assert.Equal("Handled: test1", result1);
         Assert.Equal("Handled: test2", result2);

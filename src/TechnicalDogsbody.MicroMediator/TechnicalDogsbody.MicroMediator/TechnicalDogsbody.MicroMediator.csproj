@@ -1,32 +1,34 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
-    
-    <!-- NuGet Package Properties -->
-    <PackageId>TechnicalDogsbody.MicroMediator</PackageId>
-    <Version>1.0.0</Version>
-    <Authors>Andy Blyth</Authors>
-    <Company>TechnicalDogsbody</Company>
-    <Description>Lightweight mediator pattern implementation with built-in validation, logging, and caching pipeline behaviors. Zero commercial licensing concerns. Optimized for .NET 10+ with optional interceptor support for maximum performance.</Description>
-    <PackageTags>mediator;cqrs;pipeline;validation;fluentvalidation;net10;interceptors;performance</PackageTags>
-    <PackageProjectUrl>https://github.com/technicaldogsbody/MicroMediator</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/technicaldogsbody/MicroMediator</RepositoryUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
 
-  <ItemGroup>
-    <PackageReference Include="FluentValidation" Version="11.10.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
-  </ItemGroup>
+		<!-- NuGet Package Properties -->
+		<PackageId>TechnicalDogsbody.MicroMediator</PackageId>
+		<Version>1.0.0</Version>
+		<Authors>Andy Blyth</Authors>
+		<Company>TechnicalDogsbody</Company>
+		<Description>Lightweight mediator pattern implementation with built-in validation, logging, and caching pipeline behaviors. Zero commercial licensing concerns. Optimized for .NET 10+ with optional interceptor support for maximum performance.</Description>
+		<PackageTags>mediator;cqrs;pipeline;validation;fluentvalidation;net10;interceptors;performance</PackageTags>
+		<PackageProjectUrl>https://github.com/technicaldogsbody/MicroMediator</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/technicaldogsbody/MicroMediator</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FluentValidation" Version="11.10.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+	</ItemGroup>
 
 </Project>

@@ -1,14 +1,13 @@
-﻿using BenchmarkDotNet.Running;
+using BenchmarkDotNet.Running;
 using System.Diagnostics.CodeAnalysis;
 
-namespace TechnicalDogsbody.MicroMediator.Benchmarks
+namespace TechnicalDogsbody.MicroMediator.Benchmarks;
+
+[ExcludeFromCodeCoverage]
+internal class Program
 {
-    [ExcludeFromCodeCoverage]
-    internal class Program
+    internal static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            var _ = BenchmarkRunner.Run(typeof(Program).Assembly);
-        }
+        var _ = BenchmarkRunner.Run(typeof(Program).Assembly);
     }
 }

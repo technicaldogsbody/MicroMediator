@@ -41,7 +41,7 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, Upd
     private readonly ILogger<CancelOrderCommandHandler> _logger;
 
     // Simulated order status database
-    private static readonly Dictionary<int, string> OrderStatuses = new()
+    private static readonly Dictionary<int, string> _orderStatuses = new()
     {
         { 100, "Pending" },
         { 101, "Processing" },
@@ -59,7 +59,7 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, Upd
         _logger.LogInformation("Attempting to cancel order {OrderId}. Reason: {Reason}",
             request.OrderId, request.CancellationReason);
 
-        if (!OrderStatuses.TryGetValue(request.OrderId, out var currentStatus))
+        if (!_orderStatuses.TryGetValue(request.OrderId, out string? currentStatus))
         {
             return UpdateResult.Failed($"Order {request.OrderId} not found");
         }
@@ -73,7 +73,7 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, Upd
         // Simulate database operation
         await Task.Delay(150, cancellationToken);
 
-        OrderStatuses[request.OrderId] = "Cancelled";
+        _orderStatuses[request.OrderId] = "Cancelled";
 
         _logger.LogInformation("Order {OrderId} cancelled successfully", request.OrderId);
 

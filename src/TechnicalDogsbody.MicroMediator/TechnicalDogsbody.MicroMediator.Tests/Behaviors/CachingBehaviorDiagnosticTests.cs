@@ -34,7 +34,7 @@ public class CachingBehaviorDiagnosticTests
         var cache = new MemoryCache(new MemoryCacheOptions());
         var behavior = new TechnicalDogsbody.MicroMediator.Behaviors.CachingBehavior<TestCacheableRequest, string>(cache);
         
-        var callCount = 0;
+        int callCount = 0;
         RequestHandlerDelegate<string> handler = () =>
         {
             callCount++;
@@ -44,7 +44,7 @@ public class CachingBehaviorDiagnosticTests
         var request = new TestCacheableRequest();
         
         // First call
-        var result1 = await behavior.HandleAsync(request, handler, CancellationToken.None);
+        string result1 = await behavior.HandleAsync(request, handler, CancellationToken.None);
         Assert.Equal("result", result1);
         Assert.Equal(1, callCount);
         
@@ -53,7 +53,7 @@ public class CachingBehaviorDiagnosticTests
         Assert.Equal("result", cached);
         
         // Second call
-        var result2 = await behavior.HandleAsync(request, handler, CancellationToken.None);
+        string result2 = await behavior.HandleAsync(request, handler, CancellationToken.None);
         Assert.Equal("result", result2);
         Assert.Equal(1, callCount); // Should still be 1, not called again
     }

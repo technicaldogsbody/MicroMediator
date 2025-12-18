@@ -16,7 +16,7 @@ public class PipelineBehaviorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new SimpleRequest());
+        string result = await mediator.SendAsync(new SimpleRequest());
 
         Assert.Equal("Simple", result);
     }
@@ -32,7 +32,7 @@ public class PipelineBehaviorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new TestBehaviorRequest());
+        string result = await mediator.SendAsync(new TestBehaviorRequest());
 
         Assert.Equal("[Before]Test[After]", result);
     }
@@ -49,7 +49,7 @@ public class PipelineBehaviorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new MultiBehaviorRequest());
+        string result = await mediator.SendAsync(new MultiBehaviorRequest());
 
         // Behaviors execute in reverse registration order (last registered runs first)
         Assert.Equal("[Second][First]Multi[/First][/Second]", result);
@@ -81,7 +81,7 @@ public class PipelineBehaviorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new ShortCircuitRequest());
+        string result = await mediator.SendAsync(new ShortCircuitRequest());
 
         Assert.Equal("ShortCircuit", result);
     }

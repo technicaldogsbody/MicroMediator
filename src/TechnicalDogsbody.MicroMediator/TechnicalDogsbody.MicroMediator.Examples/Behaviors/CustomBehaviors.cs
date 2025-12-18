@@ -25,7 +25,7 @@ public class PerformanceMonitoringBehavior<TRequest, TResponse> : IPipelineBehav
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var requestName = typeof(TRequest).Name;
+        string requestName = typeof(TRequest).Name;
         var stopwatch = Stopwatch.StartNew();
 
         try
@@ -77,7 +77,7 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var requestName = typeof(TRequest).Name;
+        string requestName = typeof(TRequest).Name;
 
         // Only audit commands (requests that end with "Command")
         if (requestName.EndsWith("Command"))
@@ -133,8 +133,8 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var requestName = typeof(TRequest).Name;
-        var attempt = 0;
+        string requestName = typeof(TRequest).Name;
+        int attempt = 0;
 
         while (true)
         {

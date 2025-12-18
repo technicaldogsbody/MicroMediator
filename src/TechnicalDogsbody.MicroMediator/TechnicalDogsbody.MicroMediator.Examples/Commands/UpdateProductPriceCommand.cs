@@ -66,7 +66,7 @@ public class UpdateProductPriceCommandHandler : IRequestHandler<UpdateProductPri
     private readonly ILogger<UpdateProductPriceCommandHandler> _logger;
 
     // Simulated database
-    private static readonly Dictionary<int, decimal> ProductPrices = new()
+    private static readonly Dictionary<int, decimal> _productPrices = new()
     {
         { 1, 1299.99m },
         { 2, 29.99m },
@@ -85,17 +85,17 @@ public class UpdateProductPriceCommandHandler : IRequestHandler<UpdateProductPri
         _logger.LogInformation("Updating price for product {ProductId} to {NewPrice:C}. Reason: {Reason}",
             request.ProductId, request.NewPrice, request.Reason ?? "Not specified");
 
-        if (!ProductPrices.ContainsKey(request.ProductId))
+        if (!_productPrices.ContainsKey(request.ProductId))
         {
             return UpdateResult.Failed($"Product {request.ProductId} not found");
         }
 
-        var oldPrice = ProductPrices[request.ProductId];
+        decimal oldPrice = _productPrices[request.ProductId];
 
         // Simulate database operation
         await Task.Delay(100, cancellationToken);
 
-        ProductPrices[request.ProductId] = request.NewPrice;
+        _productPrices[request.ProductId] = request.NewPrice;
 
         _logger.LogInformation("Product {ProductId} price updated from {OldPrice:C} to {NewPrice:C}",
             request.ProductId, oldPrice, request.NewPrice);

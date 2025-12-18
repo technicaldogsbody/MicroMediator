@@ -18,7 +18,7 @@ public class ValidationBehaviorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new TestRequest { Value = "test" });
+        string result = await mediator.SendAsync(new TestRequest { Value = "test" });
 
         Assert.Equal("Handled: test", result);
     }
@@ -34,7 +34,7 @@ public class ValidationBehaviorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new TestRequest { Value = "test" });
+        string result = await mediator.SendAsync(new TestRequest { Value = "test" });
 
         Assert.Equal("Handled: test", result);
     }
@@ -101,9 +101,9 @@ public class ValidationBehaviorTests
     public async Task HandleAsync_NullValidatorCollection_TreatsAsEmpty()
     {
         var behavior = new TechnicalDogsbody.MicroMediator.Behaviors.ValidationBehavior<TestRequest, string>(null!);
-        var called = false;
+        bool called = false;
 
-        var result = await behavior.HandleAsync(
+        string result = await behavior.HandleAsync(
             new TestRequest { Value = "test" },
             () =>
             {

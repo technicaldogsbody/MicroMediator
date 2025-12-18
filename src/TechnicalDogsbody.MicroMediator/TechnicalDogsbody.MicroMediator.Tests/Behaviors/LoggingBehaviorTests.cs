@@ -20,7 +20,7 @@ public class LoggingBehaviorTests
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
 
-        var result = await mediator.SendAsync(new TestRequest { Value = "test" });
+        string result = await mediator.SendAsync(new TestRequest { Value = "test" });
 
         Assert.Equal("Handled: test", result);
         Assert.Equal(2, logger.LogCount);
@@ -133,7 +133,7 @@ public class LoggingBehaviorTests
             Func<TState, Exception?, string> formatter)
         {
             LogCount++;
-            var message = formatter(state, exception);
+            string message = formatter(state, exception);
             Messages.Add(message);
         }
     }

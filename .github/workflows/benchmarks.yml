@@ -17,20 +17,53 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
-        dotnet-quality: 'preview'
     
     - name: Restore dependencies
       run: dotnet restore src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.Benchmarks/TechnicalDogsbody.MicroMediator.Benchmarks.csproj
     
     - name: Build benchmarks
-      run: dotnet build src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.Benchmarks/TechnicalDogsbody.MicroMediator.Benchmarks.csproj --configuration Release
+      run: dotnet build src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.Benchmarks/TechnicalDogsbody.MicroMediator.Benchmarks.csproj --configuration Release --no-restore
     
     - name: Run benchmarks
-      run: dotnet run --project src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.Benchmarks/TechnicalDogsbody.MicroMediator.Benchmarks.csproj --configuration Release -- --memory --filter *
+      run: dotnet run --project src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.Benchmarks/TechnicalDogsbody.MicroMediator.Benchmarks.csproj --configuration Release --no-build -- --memory --filter *
+    
+    - name: Check for benchmark results
+      id: check_results
+      shell: pwsh
+      run: |
+        $artifactsPath = "src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.Benchmarks/bin/Release/net10.0/BenchmarkDotNet.Artifacts"
+        if (Test-Path $artifactsPath) {
+          $files = Get-ChildItem -Path $artifactsPath -Recurse -File
+          if ($files.Count -gt 0) {
+            Write-Host "Found $($files.Count) benchmark result files"
+            echo "HAS_RESULTS=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No benchmark result files found"
+            echo "HAS_RESULTS=false" >> $env:GITHUB_OUTPUT
+          }
+        } else {
+          Write-Host "Artifacts directory does not exist"
+          echo "HAS_RESULTS=false" >> $env:GITHUB_OUTPUT
+        }
     
     - name: Upload benchmark results
+      if: steps.check_results.outputs.HAS_RESULTS == 'true'
       uses: actions/upload-artifact@v4
-      if: always()
       with:
-        name: benchmark-results
-        path: src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.Benchmarks/bin/Release/net10.0/BenchmarkDotNet.Artifacts/results/**/*
+        name: benchmark-results-${{ github.run_number }}
+        path: |
+          src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.Benchmarks/bin/Release/net10.0/BenchmarkDotNet.Artifacts/**/*
+        if-no-files-found: warn
+    
+    - name: Display benchmark summary
+      if: steps.check_results.outputs.HAS_RESULTS == 'true'
+      shell: pwsh
+      run: |
+        $resultsPath = "src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.Benchmarks/bin/Release/net10.0/BenchmarkDotNet.Artifacts/results"
+        if (Test-Path $resultsPath) {
+          Write-Host "=== Benchmark Results Summary ==="
+          Get-ChildItem -Path $resultsPath -Filter "*-report-github.md" | ForEach-Object {
+            Write-Host "`n### $($_.BaseName)"
+            Get-Content $_.FullName | Select-Object -First 20
+          }
+        }

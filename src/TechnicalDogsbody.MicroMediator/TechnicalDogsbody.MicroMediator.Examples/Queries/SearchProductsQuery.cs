@@ -1,8 +1,8 @@
+namespace TechnicalDogsbody.MicroMediator.Examples.Queries;
+
 using System.Diagnostics.CodeAnalysis;
 using TechnicalDogsbody.MicroMediator.Abstractions;
 using TechnicalDogsbody.MicroMediator.Examples.Models;
-
-namespace TechnicalDogsbody.MicroMediator.Examples.Queries;
 
 /// <summary>
 /// Query to search products with optional filters
@@ -21,12 +21,11 @@ public record SearchProductsQuery : IRequest<List<Product>>
 /// Handler for SearchProductsQuery
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class SearchProductsQueryHandler : IRequestHandler<SearchProductsQuery, List<Product>>
+public class SearchProductsQueryHandler(ILogger<SearchProductsQueryHandler> logger)
+    : IRequestHandler<SearchProductsQuery, List<Product>>
 {
-    private readonly ILogger<SearchProductsQueryHandler> _logger;
-
     // Simulated database
-    private static readonly List<Product> Products =
+    private static readonly List<Product> _products =
     [
         new() { Id = 1, Name = "Laptop", Description = "High-performance laptop", Price = 1299.99m, StockQuantity = 15, Category = "Electronics" },
         new() { Id = 2, Name = "Wireless Mouse", Description = "Ergonomic wireless mouse", Price = 29.99m, StockQuantity = 50, Category = "Electronics" },
@@ -36,20 +35,18 @@ public class SearchProductsQueryHandler : IRequestHandler<SearchProductsQuery, L
         new() { Id = 6, Name = "Desk Lamp", Description = "LED desk lamp", Price = 45.99m, StockQuantity = 0, Category = "Office" }
     ];
 
-    public SearchProductsQueryHandler(ILogger<SearchProductsQueryHandler> logger)
-    {
-        _logger = logger;
-    }
-
     public async ValueTask<List<Product>> HandleAsync(SearchProductsQuery request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Searching products with filters: SearchTerm={SearchTerm}, Category={Category}", 
-            request.SearchTerm, request.Category);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Searching products with filters: SearchTerm={SearchTerm}, Category={Category}",
+                request.SearchTerm, request.Category);
+        }
 
         // Simulate database delay
         await Task.Delay(100, cancellationToken);
 
-        var query = Products.AsQueryable();
+        var query = _products.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
@@ -78,6 +75,6 @@ public class SearchProductsQueryHandler : IRequestHandler<SearchProductsQuery, L
             query = query.Where(p => p.StockQuantity > 0);
         }
 
-        return query.ToList();
+        return [.. query];
     }
 }

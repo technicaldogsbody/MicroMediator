@@ -1,11 +1,11 @@
+namespace TechnicalDogsbody.MicroMediator;
+
 using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TechnicalDogsbody.MicroMediator.Abstractions;
 using TechnicalDogsbody.MicroMediator.Behaviors;
-
-namespace TechnicalDogsbody.MicroMediator;
 
 /// <summary>
 /// Extension methods for registering mediator services.

@@ -23,7 +23,7 @@ public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQu
     private readonly ILogger<GetCustomerOrdersQueryHandler> _logger;
 
     // Simulated database
-    private static readonly List<Order> Orders =
+    private static readonly List<Order> _orders =
     [
         new()
         {
@@ -67,7 +67,7 @@ public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQu
         // Simulate database delay
         await Task.Delay(150, cancellationToken);
 
-        return Orders
+        return _orders
             .Where(o => o.CustomerEmail.Equals(request.CustomerEmail, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(o => o.CreatedAt)
             .ToList();

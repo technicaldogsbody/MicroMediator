@@ -23,7 +23,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, P
     private readonly ILogger<GetProductByIdQueryHandler> _logger;
 
     // Simulated database
-    private static readonly List<Product> Products =
+    private static readonly List<Product> _products =
     [
         new() { Id = 1, Name = "Laptop", Description = "High-performance laptop", Price = 1299.99m, StockQuantity = 15, Category = "Electronics" },
         new() { Id = 2, Name = "Wireless Mouse", Description = "Ergonomic wireless mouse", Price = 29.99m, StockQuantity = 50, Category = "Electronics" },
@@ -44,6 +44,6 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, P
         // Simulate database delay
         await Task.Delay(50, cancellationToken);
 
-        return Products.FirstOrDefault(p => p.Id == request.ProductId);
+        return _products.FirstOrDefault(p => p.Id == request.ProductId);
     }
 }

@@ -1,0 +1,36 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+    
+    - name: Restore dependencies
+      run: dotnet restore src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx
+    
+    - name: Build
+      run: dotnet build src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx --no-restore --configuration Release /p:TreatWarningsAsErrors=true
+    
+    - name: Check code formatting
+      run: dotnet format src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx --verify-no-changes --verbosity diagnostic
+    
+    - name: Run static analysis
+      run: dotnet build src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx --configuration Release --no-restore /p:RunAnalyzers=true /p:EnforceCodeStyleInBuild=true

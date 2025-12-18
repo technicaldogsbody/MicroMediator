@@ -1,5 +1,10 @@
 # TechnicalDogsbody.MicroMediator
 
+[![Build and Test](https://github.com/technicaldogsbody/MicroMediator/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/technicaldogsbody/MicroMediator/actions/workflows/build-and-test.yml)
+[![CodeQL](https://github.com/technicaldogsbody/MicroMediator/actions/workflows/codeql.yml/badge.svg)](https://github.com/technicaldogsbody/MicroMediator/actions/workflows/codeql.yml)
+[![NuGet](https://img.shields.io/nuget/v/TechnicalDogsbody.MicroMediator.svg)](https://www.nuget.org/packages/TechnicalDogsbody.MicroMediator/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A lightweight, high-performance mediator pattern implementation for .NET with built-in validation, logging, and caching pipeline behaviours. Zero commercial licensing concerns.
 
 ## Why MicroMediator?
@@ -333,4 +338,4 @@ Contributions welcome! Please open an issue before submitting large changes.
 
 ## Acknowledgements
 
-Inspired by Jimmy Bogard's MediatR. Built from scratch with performance and licensing freedom in mind.
+Inspired by Jimmy Bogard's MediatR. Built from scratch with performance in mind.

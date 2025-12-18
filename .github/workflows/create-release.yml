@@ -1,0 +1,112 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+    
+    - name: Validate version format
+      shell: pwsh
+      run: |
+        $version = "${{ inputs.version }}"
+        if ($version -notmatch '^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$') {
+          Write-Error "Invalid version format. Use semantic versioning (e.g., 1.0.0 or 1.0.0-beta1)"
+          exit 1
+        }
+        echo "Version is valid: $version"
+    
+    - name: Check if tag exists
+      shell: pwsh
+      run: |
+        $tag = "v${{ inputs.version }}"
+        if (git tag -l $tag) {
+          Write-Error "Tag $tag already exists"
+          exit 1
+        }
+    
+    - name: Restore and build
+      run: |
+        dotnet restore src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx
+        dotnet build src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx --configuration Release --no-restore
+    
+    - name: Run tests
+      run: dotnet test src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.slnx --configuration Release --no-build --verbosity normal
+    
+    - name: Pack NuGet package
+      run: dotnet pack src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.csproj --configuration Release --no-build --output ./packages /p:Version=${{ inputs.version }}
+    
+    - name: Generate changelog
+      id: changelog
+      shell: pwsh
+      run: |
+        $version = "${{ inputs.version }}"
+        $previousTag = git describe --tags --abbrev=0 2>$null
+        
+        if ($previousTag) {
+          $changelog = git log "$previousTag..HEAD" --pretty=format:"- %s (%h)" --no-merges
+          $compareUrl = "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$previousTag...v$version"
+        } else {
+          $changelog = git log --pretty=format:"- %s (%h)" --no-merges
+          $compareUrl = ""
+        }
+        
+        $changelogText = @"
+        ## What's Changed
+        
+        $changelog
+        
+        $compareUrl
+        "@
+        
+        $changelogText | Out-File -FilePath changelog.txt -Encoding utf8
+        echo "PREVIOUS_TAG=$previousTag" >> $env:GITHUB_OUTPUT
+    
+    - name: Create Git tag
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -a "v${{ inputs.version }}" -m "Release version ${{ inputs.version }}"
+        git push origin "v${{ inputs.version }}"
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ inputs.version }}
+        name: Release ${{ inputs.version }}
+        body_path: changelog.txt
+        prerelease: ${{ inputs.prerelease }}
+        files: ./packages/*.nupkg
+        generate_release_notes: true
+    
+    - name: Upload package artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-package-v${{ inputs.version }}
+        path: ./packages/*.nupkg

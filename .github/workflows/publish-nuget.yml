@@ -51,7 +51,13 @@ jobs:
       run: dotnet pack src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.csproj --configuration Release --no-build --output ./packages /p:Version=${{ steps.set_version.outputs.VERSION }}
     
     - name: Push to NuGet
-      run: dotnet nuget push ./packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      shell: pwsh
+      run: |
+        $packages = Get-ChildItem -Path ./packages -Filter *.nupkg
+        foreach ($package in $packages) {
+          Write-Host "Publishing $($package.Name)..."
+          dotnet nuget push $package.FullName --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        }
     
     - name: Upload package artifact
       uses: actions/upload-artifact@v4

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TechnicalDogsbody.MicroMediator.Abstractions;
 using TechnicalDogsbody.MicroMediator.Behaviors;
+using TechnicalDogsbody.MicroMediator.Providers;
 
 /// <summary>
 /// Extension methods for registering mediator services.
@@ -162,13 +163,28 @@ public sealed class MediatorBuilder
     }
 
     /// <summary>
-    /// Adds the default caching pipeline behavior.
-    /// Ensures IMemoryCache is registered.
+    /// Adds the default caching pipeline behavior using IMemoryCache.
+    /// Ensures IMemoryCache and MemoryCacheProvider are registered.
     /// </summary>
     /// <returns>The builder for chaining.</returns>
     public MediatorBuilder AddDefaultCachingPipeline()
     {
         _services.TryAddSingleton<IMemoryCache>(_ => new MemoryCache(new MemoryCacheOptions()));
+        _services.TryAddSingleton<ICacheProvider, MemoryCacheProvider>();
+        _services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
+        return this;
+    }
+
+    /// <summary>
+    /// Adds the caching pipeline behavior with a custom cache provider.
+    /// Use this when you want FusionCache, distributed cache, etc.
+    /// </summary>
+    /// <typeparam name="TCacheProvider">Your cache provider implementation.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddCachingPipeline<TCacheProvider>()
+        where TCacheProvider : class, ICacheProvider
+    {
+        _services.TryAddSingleton<ICacheProvider, TCacheProvider>();
         _services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
         return this;
     }

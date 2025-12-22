@@ -170,7 +170,118 @@ public record GetProductByIdQuery : IRequest<Product?>, ICacheableRequest
 }
 ```
 
-When you call `AddDefaultCachingPipeline()`, the `CachingBehavior` automatically caches responses for requests implementing `ICacheableRequest`.
+#### Default Memory Cache
+
+When you call `AddDefaultCachingPipeline()`, the `CachingBehavior` automatically caches responses using `IMemoryCache`:
+
+```csharp
+builder.Services
+    .AddMediator()
+    .AddHandler<GetProductByIdQueryHandler>()
+    .AddDefaultCachingPipeline(); // Uses IMemoryCache
+```
+
+#### Custom Cache Providers
+
+MicroMediator's caching is extensible through the `ICacheProvider` abstraction. Swap in FusionCache, Redis, or any custom implementation:
+
+```csharp
+// Use FusionCache
+builder.Services
+    .AddMediator()
+    .AddCachingPipeline<FusionCacheProvider>();
+
+// Or register manually
+builder.Services.AddSingleton<ICacheProvider, RedisCacheProvider>();
+builder.Services
+    .AddMediator()
+    .AddBehavior(typeof(CachingBehavior<,>));
+```
+
+**Example: FusionCache Provider**
+
+```csharp
+public class FusionCacheProvider : ICacheProvider
+{
+    private readonly IFusionCache _cache;
+    
+    public FusionCacheProvider(IFusionCache cache)
+    {
+        _cache = cache;
+    }
+    
+    public bool TryGet<TResponse>(string cacheKey, out TResponse? value)
+    {
+        var result = _cache.TryGet<TResponse>(cacheKey);
+        if (result.HasValue)
+        {
+            value = result.Value;
+            return true;
+        }
+        
+        value = default;
+        return false;
+    }
+    
+    public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration)
+    {
+        _cache.Set(cacheKey, value, duration);
+    }
+}
+```
+
+**Example: Redis Distributed Cache Provider**
+
+```csharp
+public class RedisCacheProvider : ICacheProvider
+{
+    private readonly IDistributedCache _cache;
+    private readonly ILogger<RedisCacheProvider> _logger;
+    
+    public RedisCacheProvider(IDistributedCache cache, ILogger<RedisCacheProvider> logger)
+    {
+        _cache = cache;
+        _logger = logger;
+    }
+    
+    public bool TryGet<TResponse>(string cacheKey, out TResponse? value)
+    {
+        try
+        {
+            var bytes = _cache.Get(cacheKey);
+            if (bytes != null)
+            {
+                value = JsonSerializer.Deserialize<TResponse>(bytes);
+                return value != null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving from Redis: {CacheKey}", cacheKey);
+        }
+        
+        value = default;
+        return false;
+    }
+    
+    public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration)
+    {
+        try
+        {
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(value);
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = duration
+            };
+            _cache.Set(cacheKey, bytes, options);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error storing in Redis: {CacheKey}", cacheKey);
+        }
+    }
+}
+```
 
 ### FluentValidation Integration
 

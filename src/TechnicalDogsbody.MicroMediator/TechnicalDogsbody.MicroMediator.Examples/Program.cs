@@ -4,6 +4,7 @@ using TechnicalDogsbody.MicroMediator.Abstractions;
 using TechnicalDogsbody.MicroMediator.Examples;
 using TechnicalDogsbody.MicroMediator.Examples.Behaviors;
 using TechnicalDogsbody.MicroMediator.Examples.Commands;
+using TechnicalDogsbody.MicroMediator.Examples.Providers;
 using TechnicalDogsbody.MicroMediator.Examples.Queries;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,7 +36,11 @@ builder.Services
     .AddValidator<CancelOrderCommandValidator>()
     // Built-in pipelines
     .AddDefaultLoggingPipeline()
+    // Caching with default memory cache
     .AddDefaultCachingPipeline()
+    // OR: Use custom cache provider (commented out examples)
+    //AddCachingPipeline<CustomDictionaryCacheProvider>()
+    //.AddCachingPipeline<SimulatedDistributedCacheProvider>()
     // Custom pipelines
     .AddBehavior(typeof(PerformanceMonitoringBehavior<,>))
     .AddBehavior(typeof(AuditBehavior<,>))

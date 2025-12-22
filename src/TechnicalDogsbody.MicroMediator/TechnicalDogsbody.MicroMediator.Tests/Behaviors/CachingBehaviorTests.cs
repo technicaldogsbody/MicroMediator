@@ -1,9 +1,8 @@
-using System.Diagnostics.CodeAnalysis;
+namespace TechnicalDogsbody.MicroMediator.Tests.Behaviors;
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Tests.Behaviors;
 
 public class CachingBehaviorTests
 {
@@ -105,7 +104,8 @@ public class CachingBehaviorTests
     public async Task HandleAsync_WithNullRequest_ThrowsArgumentNullException()
     {
         var cache = new MemoryCache(new MemoryCacheOptions());
-        var behavior = new TechnicalDogsbody.MicroMediator.Behaviors.CachingBehavior<NonCacheableRequest, string>(cache);
+        var provider = new TechnicalDogsbody.MicroMediator.Providers.MemoryCacheProvider(cache);
+        var behavior = new TechnicalDogsbody.MicroMediator.Behaviors.CachingBehavior<NonCacheableRequest, string>(provider);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             behavior.HandleAsync(null!, () => ValueTask.FromResult("test"), CancellationToken.None).AsTask());
@@ -115,7 +115,8 @@ public class CachingBehaviorTests
     public async Task HandleAsync_WithNullNext_ThrowsArgumentNullException()
     {
         var cache = new MemoryCache(new MemoryCacheOptions());
-        var behavior = new TechnicalDogsbody.MicroMediator.Behaviors.CachingBehavior<NonCacheableRequest, string>(cache);
+        var provider = new TechnicalDogsbody.MicroMediator.Providers.MemoryCacheProvider(cache);
+        var behavior = new TechnicalDogsbody.MicroMediator.Behaviors.CachingBehavior<NonCacheableRequest, string>(provider);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             behavior.HandleAsync(new NonCacheableRequest { Value = "test" }, null!, CancellationToken.None).AsTask());
@@ -137,10 +138,7 @@ public class CachingBehaviorTests
     [ExcludeFromCodeCoverage]
     private class NonCacheableRequestHandler : IRequestHandler<NonCacheableRequest, string>
     {
-        public ValueTask<string> HandleAsync(NonCacheableRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult($"Handled: {request.Value}");
-        }
+        public ValueTask<string> HandleAsync(NonCacheableRequest request, CancellationToken cancellationToken) => ValueTask.FromResult($"Handled: {request.Value}");
     }
 
     [ExcludeFromCodeCoverage]
@@ -174,26 +172,14 @@ public class CachingBehaviorTests
     [ExcludeFromCodeCoverage]
     private class CustomDurationRequestHandler : IRequestHandler<CustomDurationRequest, string>
     {
-        public ValueTask<string> HandleAsync(CustomDurationRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult($"Handled: {request.Value}");
-        }
+        public ValueTask<string> HandleAsync(CustomDurationRequest request, CancellationToken cancellationToken) => ValueTask.FromResult($"Handled: {request.Value}");
     }
 
     [ExcludeFromCodeCoverage]
-    private class CountingHandler<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>
+    private class CountingHandler<TRequest, TResponse>(Func<TRequest, TResponse> handler)
+        : IRequestHandler<TRequest, TResponse>
         where TRequest : IRequest<TResponse>
     {
-        private readonly Func<TRequest, TResponse> _handler;
-
-        public CountingHandler(Func<TRequest, TResponse> handler)
-        {
-            _handler = handler;
-        }
-
-        public ValueTask<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult(_handler(request));
-        }
+        public ValueTask<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken) => ValueTask.FromResult(handler(request));
     }
 }

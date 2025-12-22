@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Caching.Memory;
 using TechnicalDogsbody.MicroMediator.Abstractions;
 
 namespace TechnicalDogsbody.MicroMediator.Behaviors;
@@ -10,10 +9,10 @@ namespace TechnicalDogsbody.MicroMediator.Behaviors;
 /// </summary>
 /// <typeparam name="TRequest">The type of request being cached.</typeparam>
 /// <typeparam name="TResponse">The type of response to cache.</typeparam>
-public sealed class CachingBehavior<TRequest, TResponse>(IMemoryCache cache) : IPipelineBehavior<TRequest, TResponse>
+public sealed class CachingBehavior<TRequest, TResponse>(ICacheProvider cacheProvider) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    private readonly IMemoryCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+    private readonly ICacheProvider _cacheProvider = cacheProvider ?? throw new ArgumentNullException(nameof(cacheProvider));
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -33,7 +32,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(IMemoryCache cache) : I
         string cacheKey = cacheableRequest.CacheKey;
 
         // FAST PATH: Cache hit - return synchronously completed ValueTask (zero allocation!)
-        if (_cache.TryGetValue(cacheKey, out TResponse? cachedResponse) && cachedResponse is not null)
+        if (_cacheProvider.TryGet<TResponse>(cacheKey, out TResponse? cachedResponse) && cachedResponse is not null)
         {
             return cachedResponse;
         }
@@ -41,12 +40,8 @@ public sealed class CachingBehavior<TRequest, TResponse>(IMemoryCache cache) : I
         // Slow path: Cache miss - execute handler and cache result
         var response = await next();
 
-        var cacheOptions = new MemoryCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = cacheableRequest.CacheDuration ?? TimeSpan.FromMinutes(5)
-        };
-
-        _cache.Set(cacheKey, response, cacheOptions);
+        TimeSpan duration = cacheableRequest.CacheDuration ?? TimeSpan.FromMinutes(5);
+        _cacheProvider.Set(cacheKey, response, duration);
 
         return response;
     }

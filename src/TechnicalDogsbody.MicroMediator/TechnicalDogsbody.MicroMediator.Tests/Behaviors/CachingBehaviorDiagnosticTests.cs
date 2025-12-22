@@ -1,9 +1,8 @@
-using System.Diagnostics.CodeAnalysis;
+namespace TechnicalDogsbody.MicroMediator.Tests.Behaviors;
+
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Tests.Behaviors;
 
 public class CachingBehaviorDiagnosticTests
 {
@@ -32,19 +31,21 @@ public class CachingBehaviorDiagnosticTests
     public async Task CachingBehavior_DirectTest_WorksCorrectly()
     {
         var cache = new MemoryCache(new MemoryCacheOptions());
-        var behavior = new TechnicalDogsbody.MicroMediator.Behaviors.CachingBehavior<TestCacheableRequest, string>(cache);
+        var provider = new TechnicalDogsbody.MicroMediator.Providers.MemoryCacheProvider(cache);
+        var behavior = new TechnicalDogsbody.MicroMediator.Behaviors.CachingBehavior<TestCacheableRequest, string>(provider);
 
         int callCount = 0;
-        RequestHandlerDelegate<string> handler = () =>
+
+        ValueTask<string> Handler()
         {
             callCount++;
             return ValueTask.FromResult("result");
-        };
+        }
 
         var request = new TestCacheableRequest();
 
         // First call
-        string result1 = await behavior.HandleAsync(request, handler, CancellationToken.None);
+        string result1 = await behavior.HandleAsync(request, Handler, CancellationToken.None);
         Assert.Equal("result", result1);
         Assert.Equal(1, callCount);
 
@@ -53,7 +54,7 @@ public class CachingBehaviorDiagnosticTests
         Assert.Equal("result", cached);
 
         // Second call
-        string result2 = await behavior.HandleAsync(request, handler, CancellationToken.None);
+        string result2 = await behavior.HandleAsync(request, Handler, CancellationToken.None);
         Assert.Equal("result", result2);
         Assert.Equal(1, callCount); // Should still be 1, not called again
     }

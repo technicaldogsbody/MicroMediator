@@ -1,11 +1,10 @@
-using System.Diagnostics.CodeAnalysis;
+namespace TechnicalDogsbody.MicroMediator.Tests;
+
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Tests;
 
 public class ServiceCollectionExtensionsTests
 {
@@ -27,7 +26,7 @@ public class ServiceCollectionExtensionsTests
     {
         IServiceCollection services = null!;
 
-        Assert.Throws<ArgumentNullException>(() => services.AddMediator());
+        Assert.Throws<ArgumentNullException>(services.AddMediator);
     }
 
     [Fact]
@@ -207,10 +206,43 @@ public class ServiceCollectionExtensionsTests
 
         var provider = services.BuildServiceProvider();
         var cache = provider.GetService<IMemoryCache>();
+        var cacheProvider = provider.GetService<ICacheProvider>();
         var behaviors = provider.GetServices<IPipelineBehavior<TestRequest, string>>();
 
         Assert.NotNull(cache);
+        Assert.NotNull(cacheProvider);
         Assert.Single(behaviors);
+    }
+
+    [Fact]
+    public void AddCachingPipeline_WithCustomProvider_RegistersCustomProvider()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddCachingPipeline<TestCacheProvider>();
+
+        var provider = services.BuildServiceProvider();
+        var cacheProvider = provider.GetService<ICacheProvider>();
+        var behaviors = provider.GetServices<IPipelineBehavior<TestRequest, string>>();
+
+        Assert.NotNull(cacheProvider);
+        Assert.IsType<TestCacheProvider>(cacheProvider);
+        Assert.Single(behaviors);
+    }
+
+    [Fact]
+    public void AddCachingPipeline_DoesNotRegisterMemoryCache()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddCachingPipeline<TestCacheProvider>();
+
+        var provider = services.BuildServiceProvider();
+        var cache = provider.GetService<IMemoryCache>();
+
+        Assert.Null(cache);
     }
 
     [Fact]
@@ -248,10 +280,7 @@ public class ServiceCollectionExtensionsTests
     [ExcludeFromCodeCoverage]
     private class TestHandler : IRequestHandler<TestRequest, string>
     {
-        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult("test");
-        }
+        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("test");
     }
 
     [ExcludeFromCodeCoverage]
@@ -259,15 +288,9 @@ public class ServiceCollectionExtensionsTests
         IRequestHandler<TestRequest, string>,
         IRequestHandler<SecondRequest, int>
     {
-        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult("test");
-        }
+        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("test");
 
-        public ValueTask<int> HandleAsync(SecondRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult(42);
-        }
+        public ValueTask<int> HandleAsync(SecondRequest request, CancellationToken cancellationToken) => ValueTask.FromResult(42);
     }
 
     [ExcludeFromCodeCoverage]
@@ -276,10 +299,7 @@ public class ServiceCollectionExtensionsTests
     [ExcludeFromCodeCoverage]
     private class HandlerWithNonGenericInterface : IRequestHandler<TestRequest, string>, IDisposable
     {
-        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult("test");
-        }
+        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("test");
 
         public void Dispose() { }
     }
@@ -312,25 +332,13 @@ public class ServiceCollectionExtensionsTests
             RuleFor(x => x.Value).NotEmpty();
         }
 
-        ValidationResult IValidator<SecondRequest>.Validate(SecondRequest instance)
-        {
-            return new ValidationResult();
-        }
+        ValidationResult IValidator<SecondRequest>.Validate(SecondRequest instance) => new();
 
-        Task<ValidationResult> IValidator<SecondRequest>.ValidateAsync(SecondRequest instance, CancellationToken cancellation)
-        {
-            return Task.FromResult(new ValidationResult());
-        }
+        Task<ValidationResult> IValidator<SecondRequest>.ValidateAsync(SecondRequest instance, CancellationToken cancellation) => Task.FromResult(new ValidationResult());
 
-        IValidatorDescriptor IValidator.CreateDescriptor()
-        {
-            return new ValidatorDescriptor<SecondRequest>(Enumerable.Empty<IValidationRule>());
-        }
+        IValidatorDescriptor IValidator.CreateDescriptor() => new ValidatorDescriptor<SecondRequest>([]);
 
-        bool IValidator.CanValidateInstancesOfType(Type type)
-        {
-            return type == typeof(TestRequest) || type == typeof(SecondRequest);
-        }
+        bool IValidator.CanValidateInstancesOfType(Type type) => type == typeof(TestRequest) || type == typeof(SecondRequest);
     }
 
     [ExcludeFromCodeCoverage]
@@ -343,9 +351,26 @@ public class ServiceCollectionExtensionsTests
         public async ValueTask<TResponse> HandleAsync(
             TRequest request,
             RequestHandlerDelegate<TResponse> next,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken) => await next();
+    }
+
+    [ExcludeFromCodeCoverage]
+    private class TestCacheProvider : ICacheProvider
+    {
+        private readonly Dictionary<string, object> _cache = new();
+
+        public bool TryGet<TResponse>(string cacheKey, out TResponse? value)
         {
-            return await next();
+            if (_cache.TryGetValue(cacheKey, out object? obj))
+            {
+                value = (TResponse)obj;
+                return true;
+            }
+
+            value = default;
+            return false;
         }
+
+        public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration) => _cache[cacheKey] = value!;
     }
 }

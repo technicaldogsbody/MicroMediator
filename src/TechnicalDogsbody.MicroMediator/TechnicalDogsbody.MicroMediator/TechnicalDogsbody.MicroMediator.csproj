@@ -12,7 +12,7 @@
 		<Authors>Andy Blyth</Authors>
 		<Company>TechnicalDogsbody</Company>
 		<Description>Lightweight mediator pattern implementation with built-in validation, logging, and caching pipeline behaviors. Zero commercial licensing concerns.</Description>
-		<PackageTags>mediator;cqrs;pipeline;validation;fluentvalidation;net10;interceptors;performance</PackageTags>
+		<PackageTags>mediator;cqrs;pipeline;validation;fluentvalidation;net10;performance</PackageTags>
 		<PackageProjectUrl>https://github.com/technicaldogsbody/MicroMediator</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/technicaldogsbody/MicroMediator</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>

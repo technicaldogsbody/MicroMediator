@@ -33,7 +33,7 @@ where TRequest : IRequest<TResponse>
         string cacheKey = cacheableRequest.CacheKey;
 
         // FAST PATH: Cache hit - return synchronously completed ValueTask (zero allocation!)
-        if (_cacheProvider.TryGet<TResponse>(cacheKey, out TResponse? cachedResponse) && cachedResponse is not null)
+        if (_cacheProvider.TryGet<TResponse>(cacheKey, out var cachedResponse) && cachedResponse is not null)
         {
             return cachedResponse;
         }
@@ -41,7 +41,7 @@ where TRequest : IRequest<TResponse>
         // Slow path: Cache miss - execute handler and cache result
         var response = await next();
 
-        TimeSpan duration = cacheableRequest.CacheDuration ?? TimeSpan.FromMinutes(5);
+        var duration = cacheableRequest.CacheDuration ?? TimeSpan.FromMinutes(5);
         _cacheProvider.Set(cacheKey, response, duration);
 
         return response;

@@ -8,7 +8,7 @@
 
 		<!-- NuGet Package Properties -->
 		<PackageId>TechnicalDogsbody.MicroMediator</PackageId>
-		<Version>1.1.0</Version>
+		<Version>1.2.0</Version>
 		<Authors>Andy Blyth</Authors>
 		<Company>TechnicalDogsbody</Company>
 		<Description>Lightweight mediator pattern implementation with built-in validation, logging, and caching pipeline behaviors. Zero commercial licensing concerns.</Description>

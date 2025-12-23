@@ -1,8 +1,9 @@
+
+namespace TechnicalDogsbody.MicroMediator.Tests;
+
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Tests;
 
 public class PipelineBehaviorTests
 {
@@ -92,10 +93,7 @@ public class PipelineBehaviorTests
     [ExcludeFromCodeCoverage]
     private class SimpleRequestHandler : IRequestHandler<SimpleRequest, string>
     {
-        public ValueTask<string> HandleAsync(SimpleRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult("Simple");
-        }
+        public ValueTask<string> HandleAsync(SimpleRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("Simple");
     }
 
     [ExcludeFromCodeCoverage]
@@ -104,10 +102,7 @@ public class PipelineBehaviorTests
     [ExcludeFromCodeCoverage]
     private class TestBehaviorRequestHandler : IRequestHandler<TestBehaviorRequest, string>
     {
-        public ValueTask<string> HandleAsync(TestBehaviorRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult("Test");
-        }
+        public ValueTask<string> HandleAsync(TestBehaviorRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("Test");
     }
 
     [ExcludeFromCodeCoverage]
@@ -116,10 +111,7 @@ public class PipelineBehaviorTests
     [ExcludeFromCodeCoverage]
     private class MultiBehaviorRequestHandler : IRequestHandler<MultiBehaviorRequest, string>
     {
-        public ValueTask<string> HandleAsync(MultiBehaviorRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult("Multi");
-        }
+        public ValueTask<string> HandleAsync(MultiBehaviorRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("Multi");
     }
 
     [ExcludeFromCodeCoverage]
@@ -128,10 +120,7 @@ public class PipelineBehaviorTests
     [ExcludeFromCodeCoverage]
     private class ExceptionRequestHandler : IRequestHandler<ExceptionRequest, string>
     {
-        public ValueTask<string> HandleAsync(ExceptionRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult("Exception");
-        }
+        public ValueTask<string> HandleAsync(ExceptionRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("Exception");
     }
 
     [ExcludeFromCodeCoverage]
@@ -140,10 +129,7 @@ public class PipelineBehaviorTests
     [ExcludeFromCodeCoverage]
     private class ShortCircuitRequestHandler : IRequestHandler<ShortCircuitRequest, string>
     {
-        public ValueTask<string> HandleAsync(ShortCircuitRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult("ShouldNotBeCalled");
-        }
+        public ValueTask<string> HandleAsync(ShortCircuitRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("ShouldNotBeCalled");
     }
 
     [ExcludeFromCodeCoverage]
@@ -195,10 +181,7 @@ public class PipelineBehaviorTests
         public ValueTask<TResponse> HandleAsync(
             TRequest request,
             RequestHandlerDelegate<TResponse> next,
-            CancellationToken cancellationToken)
-        {
-            throw new InvalidOperationException("Behavior exception");
-        }
+            CancellationToken cancellationToken) => throw new InvalidOperationException("Behavior exception");
     }
 
     [ExcludeFromCodeCoverage]
@@ -208,9 +191,6 @@ public class PipelineBehaviorTests
         public ValueTask<TResponse> HandleAsync(
             TRequest request,
             RequestHandlerDelegate<TResponse> next,
-            CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult((TResponse)(object)"ShortCircuit");
-        }
+            CancellationToken cancellationToken) => ValueTask.FromResult((TResponse)(object)"ShortCircuit");
     }
 }

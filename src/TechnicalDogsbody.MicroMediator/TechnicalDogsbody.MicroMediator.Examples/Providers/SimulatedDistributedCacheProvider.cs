@@ -1,8 +1,8 @@
 namespace TechnicalDogsbody.MicroMediator.Examples.Providers;
 
 using System.Collections.Concurrent;
-using TechnicalDogsbody.MicroMediator.Abstractions;
 using System.Diagnostics.CodeAnalysis;
+using TechnicalDogsbody.MicroMediator.Abstractions;
 
 /// <summary>
 /// Example cache provider simulating distributed cache behaviour.

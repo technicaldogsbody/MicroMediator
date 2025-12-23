@@ -1,3 +1,6 @@
+
+namespace TechnicalDogsbody.MicroMediator.Benchmarks;
+
 using BenchmarkDotNet.Attributes;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,8 +11,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
-
-namespace TechnicalDogsbody.MicroMediator.Benchmarks;
 
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
@@ -59,16 +60,10 @@ public class PipelineBenchmarks
     }
 
     [Benchmark(Baseline = true)]
-    public async Task<int> SimpleMediator_WithValidation()
-    {
-        return await _simpleMediator.SendAsync(new ValidatedQuery { Value = 42 });
-    }
+    public async Task<int> SimpleMediator_WithValidation() => await _simpleMediator.SendAsync(new ValidatedQuery { Value = 42 });
 
     [Benchmark]
-    public async Task<int> MediatR_WithValidation()
-    {
-        return await _mediatr.Send(new MediatrValidatedQuery { Value = 42 });
-    }
+    public async Task<int> MediatR_WithValidation() => await _mediatr.Send(new MediatrValidatedQuery { Value = 42 });
 
     // SimpleMediator types
     public record ValidatedQuery : Abstractions.IRequest<int>
@@ -78,10 +73,7 @@ public class PipelineBenchmarks
 
     public class ValidatedQueryHandler : Abstractions.IRequestHandler<ValidatedQuery, int>
     {
-        public ValueTask<int> HandleAsync(ValidatedQuery request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult(request.Value * 2);
-        }
+        public ValueTask<int> HandleAsync(ValidatedQuery request, CancellationToken cancellationToken) => ValueTask.FromResult(request.Value * 2);
     }
 
     public class ValidatedQueryValidator : AbstractValidator<ValidatedQuery>
@@ -100,10 +92,7 @@ public class PipelineBenchmarks
 
     public class MediatrValidatedQueryHandler : MediatR.IRequestHandler<MediatrValidatedQuery, int>
     {
-        public Task<int> Handle(MediatrValidatedQuery request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(request.Value * 2);
-        }
+        public Task<int> Handle(MediatrValidatedQuery request, CancellationToken cancellationToken) => Task.FromResult(request.Value * 2);
     }
 
     public class MediatrValidatedQueryValidator : AbstractValidator<MediatrValidatedQuery>
@@ -115,28 +104,22 @@ public class PipelineBenchmarks
     }
 
     // MediatR validation behavior (mimicking yours)
-    public class MediatrValidationBehavior<TRequest, TResponse> : MediatR.IPipelineBehavior<TRequest, TResponse>
+    public class MediatrValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
+        : MediatR.IPipelineBehavior<TRequest, TResponse>
         where TRequest : notnull
     {
-        private readonly IEnumerable<IValidator<TRequest>> _validators;
-
-        public MediatrValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
-        {
-            _validators = validators;
-        }
-
         public async Task<TResponse> Handle(TRequest request, MediatR.RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
-            var validators = _validators.ToArray();
+            var validators1 = validators.ToArray();
 
-            if (validators.Length == 0)
+            if (validators1.Length == 0)
             {
-                return await next();
+                return await next(cancellationToken);
             }
 
             var context = new ValidationContext<TRequest>(request);
             var validationResults = await Task.WhenAll(
-                validators.Select(v => v.ValidateAsync(context, cancellationToken)));
+                validators1.Select(v => v.ValidateAsync(context, cancellationToken)));
 
             var failures = validationResults
                 .SelectMany(r => r.Errors)
@@ -148,7 +131,7 @@ public class PipelineBenchmarks
                 throw new ValidationException(failures);
             }
 
-            return await next();
+            return await next(cancellationToken);
         }
     }
 }

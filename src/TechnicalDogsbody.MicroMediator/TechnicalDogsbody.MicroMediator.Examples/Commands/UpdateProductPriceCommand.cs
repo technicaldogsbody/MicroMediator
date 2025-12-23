@@ -1,8 +1,9 @@
+
+namespace TechnicalDogsbody.MicroMediator.Examples.Commands;
+
 using FluentValidation;
 using System.Diagnostics.CodeAnalysis;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Examples.Commands;
 
 /// <summary>
 /// Command to update product price
@@ -61,43 +62,35 @@ public class UpdateProductPriceCommandValidator : AbstractValidator<UpdateProduc
 /// Handler for UpdateProductPriceCommand
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class UpdateProductPriceCommandHandler : IRequestHandler<UpdateProductPriceCommand, UpdateResult>
+public class UpdateProductPriceCommandHandler(ILogger<UpdateProductPriceCommandHandler> logger)
+    : IRequestHandler<UpdateProductPriceCommand, UpdateResult>
 {
-    private readonly ILogger<UpdateProductPriceCommandHandler> _logger;
-
     // Simulated database
     private static readonly Dictionary<int, decimal> _productPrices = new()
-    {
-        { 1, 1299.99m },
-        { 2, 29.99m },
-        { 3, 149.99m },
-        { 4, 19.99m },
-        { 5, 399.99m }
-    };
-
-    public UpdateProductPriceCommandHandler(ILogger<UpdateProductPriceCommandHandler> logger)
-    {
-        _logger = logger;
-    }
+{
+    { 1, 1299.99m },
+    { 2, 29.99m },
+    { 3, 149.99m },
+    { 4, 19.99m },
+    { 5, 399.99m }
+};
 
     public async ValueTask<UpdateResult> HandleAsync(UpdateProductPriceCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Updating price for product {ProductId} to {NewPrice:C}. Reason: {Reason}",
+        logger.LogInformation("Updating price for product {ProductId} to {NewPrice:C}. Reason: {Reason}",
             request.ProductId, request.NewPrice, request.Reason ?? "Not specified");
 
-        if (!_productPrices.ContainsKey(request.ProductId))
+        if (!_productPrices.TryGetValue(request.ProductId, out decimal oldPrice))
         {
             return UpdateResult.Failed($"Product {request.ProductId} not found");
         }
-
-        decimal oldPrice = _productPrices[request.ProductId];
 
         // Simulate database operation
         await Task.Delay(100, cancellationToken);
 
         _productPrices[request.ProductId] = request.NewPrice;
 
-        _logger.LogInformation("Product {ProductId} price updated from {OldPrice:C} to {NewPrice:C}",
+        logger.LogInformation("Product {ProductId} price updated from {OldPrice:C} to {NewPrice:C}",
             request.ProductId, oldPrice, request.NewPrice);
 
         return UpdateResult.Succeeded($"Price updated from {oldPrice:C} to {request.NewPrice:C}");

@@ -1,8 +1,9 @@
+
+namespace TechnicalDogsbody.MicroMediator.Examples.Commands;
+
 using FluentValidation;
 using System.Diagnostics.CodeAnalysis;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Examples.Commands;
 
 /// <summary>
 /// Command to cancel an order
@@ -36,27 +37,21 @@ public class CancelOrderCommandValidator : AbstractValidator<CancelOrderCommand>
 /// Handler for CancelOrderCommand
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, UpdateResult>
+public class CancelOrderCommandHandler(ILogger<CancelOrderCommandHandler> logger)
+    : IRequestHandler<CancelOrderCommand, UpdateResult>
 {
-    private readonly ILogger<CancelOrderCommandHandler> _logger;
-
     // Simulated order status database
     private static readonly Dictionary<int, string> _orderStatuses = new()
-    {
-        { 100, "Pending" },
-        { 101, "Processing" },
-        { 102, "Shipped" },
-        { 103, "Delivered" }
-    };
-
-    public CancelOrderCommandHandler(ILogger<CancelOrderCommandHandler> logger)
-    {
-        _logger = logger;
-    }
+{
+    { 100, "Pending" },
+    { 101, "Processing" },
+    { 102, "Shipped" },
+    { 103, "Delivered" }
+};
 
     public async ValueTask<UpdateResult> HandleAsync(CancelOrderCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Attempting to cancel order {OrderId}. Reason: {Reason}",
+        logger.LogInformation("Attempting to cancel order {OrderId}. Reason: {Reason}",
             request.OrderId, request.CancellationReason);
 
         if (!_orderStatuses.TryGetValue(request.OrderId, out string? currentStatus))
@@ -74,8 +69,7 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, Upd
         await Task.Delay(150, cancellationToken);
 
         _orderStatuses[request.OrderId] = "Cancelled";
-
-        _logger.LogInformation("Order {OrderId} cancelled successfully", request.OrderId);
+            logger.LogInformation("Order {OrderId} cancelled successfully", request.OrderId);
 
         return UpdateResult.Succeeded($"Order {request.OrderId} has been cancelled");
     }

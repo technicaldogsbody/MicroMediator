@@ -1,7 +1,8 @@
-using System.Runtime.CompilerServices;
-using TechnicalDogsbody.MicroMediator.Abstractions;
 
 namespace TechnicalDogsbody.MicroMediator.Behaviors;
+
+using System.Runtime.CompilerServices;
+using TechnicalDogsbody.MicroMediator.Abstractions;
 
 /// <summary>
 /// Caches query responses when request implements ICacheableRequest.
@@ -10,7 +11,7 @@ namespace TechnicalDogsbody.MicroMediator.Behaviors;
 /// <typeparam name="TRequest">The type of request being cached.</typeparam>
 /// <typeparam name="TResponse">The type of response to cache.</typeparam>
 public sealed class CachingBehavior<TRequest, TResponse>(ICacheProvider cacheProvider) : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+where TRequest : IRequest<TResponse>
 {
     private readonly ICacheProvider _cacheProvider = cacheProvider ?? throw new ArgumentNullException(nameof(cacheProvider));
 

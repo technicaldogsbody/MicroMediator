@@ -1,11 +1,13 @@
+
+#pragma warning disable CA1822
+namespace TechnicalDogsbody.MicroMediator.Benchmarks;
+
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
-
-namespace TechnicalDogsbody.MicroMediator.Benchmarks;
 
 [MemoryDiagnoser]
 [SimpleJob(warmupCount: 0, iterationCount: 1, invocationCount: 1)]
@@ -48,10 +50,7 @@ public class ColdStartBenchmarks
 
     public class ColdStartQueryHandler : Abstractions.IRequestHandler<ColdStartQuery, int>
     {
-        public ValueTask<int> HandleAsync(ColdStartQuery request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult(request.Value * 2);
-        }
+        public ValueTask<int> HandleAsync(ColdStartQuery request, CancellationToken cancellationToken) => ValueTask.FromResult(request.Value * 2);
     }
 
     // MediatR types
@@ -62,9 +61,6 @@ public class ColdStartBenchmarks
 
     public class MediatrColdStartQueryHandler : MediatR.IRequestHandler<MediatrColdStartQuery, int>
     {
-        public Task<int> Handle(MediatrColdStartQuery request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(request.Value * 2);
-        }
+        public Task<int> Handle(MediatrColdStartQuery request, CancellationToken cancellationToken) => Task.FromResult(request.Value * 2);
     }
 }

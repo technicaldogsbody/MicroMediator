@@ -1,8 +1,9 @@
+
+namespace TechnicalDogsbody.MicroMediator.Examples.Queries;
+
 using System.Diagnostics.CodeAnalysis;
 using TechnicalDogsbody.MicroMediator.Abstractions;
 using TechnicalDogsbody.MicroMediator.Examples.Models;
-
-namespace TechnicalDogsbody.MicroMediator.Examples.Queries;
 
 /// <summary>
 /// Query to get customer order history with caching
@@ -26,31 +27,31 @@ public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQu
     private static readonly List<Order> _orders =
     [
         new()
-        {
-            Id = 1,
-            CustomerEmail = "john.doe@example.com",
-            Items =
-            [
-                new() { ProductId = 1, ProductName = "Laptop", Quantity = 1, UnitPrice = 1299.99m },
-                new() { ProductId = 2, ProductName = "Wireless Mouse", Quantity = 2, UnitPrice = 29.99m }
-            ],
-            TotalAmount = 1359.97m,
-            Status = OrderStatus.Delivered,
-            CreatedAt = DateTime.UtcNow.AddDays(-10),
-            CompletedAt = DateTime.UtcNow.AddDays(-7)
-        },
-        new()
-        {
-            Id = 2,
-            CustomerEmail = "john.doe@example.com",
-            Items =
-            [
-                new() { ProductId = 3, ProductName = "Mechanical Keyboard", Quantity = 1, UnitPrice = 149.99m }
-            ],
-            TotalAmount = 149.99m,
-            Status = OrderStatus.Shipped,
-            CreatedAt = DateTime.UtcNow.AddDays(-2)
-        }
+    {
+        Id = 1,
+        CustomerEmail = "john.doe@example.com",
+        Items =
+        [
+            new() { ProductId = 1, ProductName = "Laptop", Quantity = 1, UnitPrice = 1299.99m },
+            new() { ProductId = 2, ProductName = "Wireless Mouse", Quantity = 2, UnitPrice = 29.99m }
+        ],
+        TotalAmount = 1359.97m,
+        Status = OrderStatus.Delivered,
+        CreatedAt = DateTime.UtcNow.AddDays(-10),
+        CompletedAt = DateTime.UtcNow.AddDays(-7)
+    },
+    new()
+    {
+        Id = 2,
+        CustomerEmail = "john.doe@example.com",
+        Items =
+        [
+            new() { ProductId = 3, ProductName = "Mechanical Keyboard", Quantity = 1, UnitPrice = 149.99m }
+        ],
+        TotalAmount = 149.99m,
+        Status = OrderStatus.Shipped,
+        CreatedAt = DateTime.UtcNow.AddDays(-2)
+    }
     ];
 
     [ExcludeFromCodeCoverage]

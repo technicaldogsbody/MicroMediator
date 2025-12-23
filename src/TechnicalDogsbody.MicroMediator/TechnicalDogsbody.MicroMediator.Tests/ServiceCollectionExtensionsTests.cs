@@ -33,7 +33,7 @@ public class ServiceCollectionExtensionsTests
     public void MediatorBuilder_WithNullServices_ThrowsArgumentNullException()
     {
         IServiceCollection services = null!;
-        
+
         var exception = Assert.Throws<ArgumentNullException>(() => new MediatorBuilder(services));
         Assert.Equal("services", exception.ParamName);
     }
@@ -268,6 +268,93 @@ public class ServiceCollectionExtensionsTests
             services.AddMediator().AddBehavior(null!));
     }
 
+    [Fact]
+    public void AddStreamHandler_GenericInference_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddStreamHandler<TestStreamHandler>();
+
+        var provider = services.BuildServiceProvider();
+        var handler = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddStreamHandler_ExplicitTypes_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddStreamHandler<TestStreamRequest, int, TestStreamHandler>();
+
+        var provider = services.BuildServiceProvider();
+        var handler = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddStreamHandler_NonHandler_ThrowsInvalidOperationException()
+    {
+        var services = new ServiceCollection();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            services.AddMediator().AddStreamHandler<NotAHandler>());
+
+        Assert.Contains("must implement IStreamRequestHandler", exception.Message);
+    }
+
+    [Fact]
+    public void AddStreamHandler_MultipleInterfaces_ThrowsInvalidOperationException()
+    {
+        var services = new ServiceCollection();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            services.AddMediator().AddStreamHandler<MultipleStreamInterfaceHandler>());
+
+        Assert.Contains("implements multiple IStreamRequestHandler interfaces", exception.Message);
+    }
+
+    [Fact]
+    public void AddStreamHandler_WithNonGenericInterfaces_IgnoresThemAndRegistersCorrectly()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddStreamHandler<StreamHandlerWithNonGenericInterface>();
+
+        var provider = services.BuildServiceProvider();
+        var handler = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddStreamBehavior_WithValidType_RegistersBehavior()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddStreamBehavior(typeof(CustomStreamBehavior<,>));
+
+        var provider = services.BuildServiceProvider();
+        var behaviors = provider.GetServices<IStreamPipelineBehavior<TestStreamRequest, int>>();
+
+        Assert.Single(behaviors);
+    }
+
+    [Fact]
+    public void AddStreamBehavior_WithNullType_ThrowsArgumentNullException()
+    {
+        var services = new ServiceCollection();
+
+        Assert.Throws<ArgumentNullException>(() =>
+            services.AddMediator().AddStreamBehavior(null!));
+    }
+
     [ExcludeFromCodeCoverage]
     private record TestRequest : IRequest<string>
     {
@@ -357,7 +444,7 @@ public class ServiceCollectionExtensionsTests
     [ExcludeFromCodeCoverage]
     private class TestCacheProvider : ICacheProvider
     {
-        private readonly Dictionary<string, object> _cache = new();
+        private readonly Dictionary<string, object> _cache = [];
 
         public bool TryGet<TResponse>(string cacheKey, out TResponse? value)
         {
@@ -372,5 +459,82 @@ public class ServiceCollectionExtensionsTests
         }
 
         public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration) => _cache[cacheKey] = value!;
+    }
+
+    // Streaming test types
+    [ExcludeFromCodeCoverage]
+    private record TestStreamRequest : IStreamRequest<int>
+    {
+        public int Count { get; init; }
+    }
+
+    [ExcludeFromCodeCoverage]
+    private record SecondStreamRequest : IStreamRequest<string>;
+
+    [ExcludeFromCodeCoverage]
+    private class TestStreamHandler : IStreamRequestHandler<TestStreamRequest, int>
+    {
+        public async IAsyncEnumerable<int> HandleAsync(
+            TestStreamRequest request,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            for (int i = 1; i <= request.Count; i++)
+            {
+                await Task.Yield();
+                yield return i;
+            }
+        }
+    }
+
+    [ExcludeFromCodeCoverage]
+    private class MultipleStreamInterfaceHandler :
+        IStreamRequestHandler<TestStreamRequest, int>,
+        IStreamRequestHandler<SecondStreamRequest, string>
+    {
+        public async IAsyncEnumerable<int> HandleAsync(
+            TestStreamRequest request,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            await Task.Yield();
+            yield return 1;
+        }
+
+        public async IAsyncEnumerable<string> HandleAsync(
+            SecondStreamRequest request,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            await Task.Yield();
+            yield return "test";
+        }
+    }
+
+    [ExcludeFromCodeCoverage]
+    private class StreamHandlerWithNonGenericInterface : IStreamRequestHandler<TestStreamRequest, int>, IDisposable
+    {
+        public async IAsyncEnumerable<int> HandleAsync(
+            TestStreamRequest request,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            await Task.Yield();
+            yield return 1;
+        }
+
+        public void Dispose() { }
+    }
+
+    [ExcludeFromCodeCoverage]
+    private class CustomStreamBehavior<TRequest, TResponse> : IStreamPipelineBehavior<TRequest, TResponse>
+        where TRequest : IStreamRequest<TResponse>
+    {
+        public async IAsyncEnumerable<TResponse> HandleAsync(
+            TRequest request,
+            StreamHandlerDelegate<TResponse> next,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            await foreach (var item in next().WithCancellation(cancellationToken))
+            {
+                yield return item;
+            }
+        }
     }
 }

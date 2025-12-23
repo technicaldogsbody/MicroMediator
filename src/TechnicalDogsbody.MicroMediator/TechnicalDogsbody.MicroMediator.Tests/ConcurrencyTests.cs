@@ -1,8 +1,9 @@
+
+namespace TechnicalDogsbody.MicroMediator.Tests;
+
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Tests;
 
 public class ConcurrencyTests
 {
@@ -23,7 +24,7 @@ public class ConcurrencyTests
         int[] results = await Task.WhenAll(tasks.Select(t => t.AsTask()));
 
         Assert.Equal(100, results.Length);
-        Assert.All(results, r => Assert.True(r >= 0 && r < 100));
+        Assert.All(results, r => Assert.True(r is >= 0 and < 100));
     }
 
     [Fact]
@@ -107,10 +108,7 @@ public class ConcurrencyTests
     [ExcludeFromCodeCoverage]
     private class TestRequestHandler : IRequestHandler<TestRequest, int>
     {
-        public ValueTask<int> HandleAsync(TestRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult(request.Value);
-        }
+        public ValueTask<int> HandleAsync(TestRequest request, CancellationToken cancellationToken) => ValueTask.FromResult(request.Value);
     }
 
     [ExcludeFromCodeCoverage]
@@ -119,10 +117,7 @@ public class ConcurrencyTests
     [ExcludeFromCodeCoverage]
     private class FirstRequestHandler : IRequestHandler<FirstRequest, string>
     {
-        public ValueTask<string> HandleAsync(FirstRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult("First");
-        }
+        public ValueTask<string> HandleAsync(FirstRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("First");
     }
 
     [ExcludeFromCodeCoverage]
@@ -131,10 +126,7 @@ public class ConcurrencyTests
     [ExcludeFromCodeCoverage]
     private class SecondRequestHandler : IRequestHandler<SecondRequest, int>
     {
-        public ValueTask<int> HandleAsync(SecondRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult(42);
-        }
+        public ValueTask<int> HandleAsync(SecondRequest request, CancellationToken cancellationToken) => ValueTask.FromResult(42);
     }
 
     [ExcludeFromCodeCoverage]
@@ -156,9 +148,6 @@ public class ConcurrencyTests
     [ExcludeFromCodeCoverage]
     private class SyncRequestHandler : IRequestHandler<SyncRequest, string>
     {
-        public ValueTask<string> HandleAsync(SyncRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult("Sync");
-        }
+        public ValueTask<string> HandleAsync(SyncRequest request, CancellationToken cancellationToken) => ValueTask.FromResult("Sync");
     }
 }

@@ -1,3 +1,6 @@
+
+namespace TechnicalDogsbody.MicroMediator.Benchmarks;
+
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
@@ -5,8 +8,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
-
-namespace TechnicalDogsbody.MicroMediator.Benchmarks;
 
 [MemoryDiagnoser]
 [SimpleJob(warmupCount: 3, iterationCount: 10)]
@@ -106,11 +107,7 @@ public class ThroughputBenchmarks
 
     public class ThroughputQueryHandler : Abstractions.IRequestHandler<ThroughputQuery, int>
     {
-        public ValueTask<int> HandleAsync(ThroughputQuery request, CancellationToken cancellationToken)
-        {
-            // Simulate minimal work
-            return ValueTask.FromResult(request.Value * 2);
-        }
+        public ValueTask<int> HandleAsync(ThroughputQuery request, CancellationToken cancellationToken) => ValueTask.FromResult(request.Value * 2);
     }
 
     // MediatR types
@@ -121,9 +118,6 @@ public class ThroughputBenchmarks
 
     public class MediatrThroughputQueryHandler : MediatR.IRequestHandler<MediatrThroughputQuery, int>
     {
-        public Task<int> Handle(MediatrThroughputQuery request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(request.Value * 2);
-        }
+        public Task<int> Handle(MediatrThroughputQuery request, CancellationToken cancellationToken) => Task.FromResult(request.Value * 2);
     }
 }

@@ -1,8 +1,9 @@
+
+namespace TechnicalDogsbody.MicroMediator.Examples.Behaviors;
+
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Examples.Behaviors;
 
 /// <summary>
 /// Custom behavior that tracks performance metrics for requests
@@ -11,7 +12,7 @@ namespace TechnicalDogsbody.MicroMediator.Examples.Behaviors;
 /// <typeparam name="TResponse">Response type</typeparam>
 [ExcludeFromCodeCoverage]
 public class PerformanceMonitoringBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+where TRequest : IRequest<TResponse>
 {
     private readonly ILogger<PerformanceMonitoringBehavior<TRequest, TResponse>> _logger;
 
@@ -63,7 +64,7 @@ public class PerformanceMonitoringBehavior<TRequest, TResponse> : IPipelineBehav
 /// <typeparam name="TResponse">Response type</typeparam>
 [ExcludeFromCodeCoverage]
 public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+where TRequest : IRequest<TResponse>
 {
     private readonly ILogger<AuditBehavior<TRequest, TResponse>> _logger;
 
@@ -117,7 +118,7 @@ public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
 /// <typeparam name="TResponse">Response type</typeparam>
 [ExcludeFromCodeCoverage]
 public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+where TRequest : IRequest<TResponse>
 {
     private readonly ILogger<RetryBehavior<TRequest, TResponse>> _logger;
     private const int MaxRetries = 3;

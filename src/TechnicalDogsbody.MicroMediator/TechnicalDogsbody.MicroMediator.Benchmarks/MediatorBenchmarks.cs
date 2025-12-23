@@ -1,11 +1,12 @@
+
+namespace TechnicalDogsbody.MicroMediator.Benchmarks;
+
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
-
-namespace TechnicalDogsbody.MicroMediator.Benchmarks;
 
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
@@ -43,16 +44,10 @@ public class MediatorBenchmarks
     }
 
     [Benchmark(Baseline = true)]
-    public async Task<int> SimpleMediator_Send()
-    {
-        return await _simpleMediator.SendAsync(new SimpleQuery { Value = 42 });
-    }
+    public async Task<int> SimpleMediator_Send() => await _simpleMediator.SendAsync(new SimpleQuery { Value = 42 });
 
     [Benchmark]
-    public async Task<int> MediatR_Send()
-    {
-        return await _mediatr.Send(new MediatrQuery { Value = 42 });
-    }
+    public async Task<int> MediatR_Send() => await _mediatr.Send(new MediatrQuery { Value = 42 });
 
     // SimpleMediator types
     public record SimpleQuery : Abstractions.IRequest<int>
@@ -62,10 +57,7 @@ public class MediatorBenchmarks
 
     public class SimpleQueryHandler : Abstractions.IRequestHandler<SimpleQuery, int>
     {
-        public ValueTask<int> HandleAsync(SimpleQuery request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult(request.Value * 2);
-        }
+        public ValueTask<int> HandleAsync(SimpleQuery request, CancellationToken cancellationToken) => ValueTask.FromResult(request.Value * 2);
     }
 
     // MediatR types
@@ -76,9 +68,6 @@ public class MediatorBenchmarks
 
     public class MediatrQueryHandler : MediatR.IRequestHandler<MediatrQuery, int>
     {
-        public Task<int> Handle(MediatrQuery request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(request.Value * 2);
-        }
+        public Task<int> Handle(MediatrQuery request, CancellationToken cancellationToken) => Task.FromResult(request.Value * 2);
     }
 }

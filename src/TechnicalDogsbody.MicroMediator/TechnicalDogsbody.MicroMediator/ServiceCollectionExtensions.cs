@@ -200,4 +200,64 @@ public sealed class MediatorBuilder
         _services.AddTransient(typeof(IPipelineBehavior<,>), behaviorType);
         return this;
     }
+
+    /// <summary>
+    /// Registers a streaming request handler by handler type.
+    /// Automatically discovers TRequest and TResponse from the handler's implemented interface.
+    /// Uses minimal reflection at startup only.
+    /// </summary>
+    /// <typeparam name="THandler">The streaming handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddStreamHandler<THandler>()
+        where THandler : class
+    {
+        var handlerType = typeof(THandler);
+        var handlerInterfaces = handlerType.GetInterfaces()
+            .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IStreamRequestHandler<,>))
+            .ToArray();
+
+        if (handlerInterfaces.Length == 0)
+        {
+            throw new InvalidOperationException(
+                $"Handler type '{handlerType.Name}' must implement IStreamRequestHandler<TRequest, TResponse>.");
+        }
+
+        if (handlerInterfaces.Length > 1)
+        {
+            throw new InvalidOperationException(
+                $"Handler type '{handlerType.Name}' implements multiple IStreamRequestHandler interfaces. " +
+                $"Use the explicit AddStreamHandler<TRequest, TResponse, THandler>() overload to specify which interface to register.");
+        }
+
+        _services.AddTransient(handlerInterfaces[0], handlerType);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a streaming request handler explicitly with all type parameters.
+    /// Zero reflection.
+    /// </summary>
+    /// <typeparam name="TRequest">The streaming request type.</typeparam>
+    /// <typeparam name="TResponse">The response item type.</typeparam>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddStreamHandler<TRequest, TResponse, THandler>()
+        where TRequest : IStreamRequest<TResponse>
+        where THandler : class, IStreamRequestHandler<TRequest, TResponse>
+    {
+        _services.AddTransient<IStreamRequestHandler<TRequest, TResponse>, THandler>();
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a custom streaming pipeline behavior.
+    /// </summary>
+    /// <param name="behaviorType">The behavior type (must be open generic like typeof(MyStreamBehavior&lt;,&gt;)).</param>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddStreamBehavior(Type behaviorType)
+    {
+        ArgumentNullException.ThrowIfNull(behaviorType);
+        _services.AddTransient(typeof(IStreamPipelineBehavior<,>), behaviorType);
+        return this;
+    }
 }

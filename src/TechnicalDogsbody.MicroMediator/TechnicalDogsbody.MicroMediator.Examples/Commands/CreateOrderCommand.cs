@@ -1,8 +1,9 @@
+
+namespace TechnicalDogsbody.MicroMediator.Examples.Commands;
+
 using FluentValidation;
 using System.Diagnostics.CodeAnalysis;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Examples.Commands;
 
 /// <summary>
 /// Command to create a new order
@@ -81,30 +82,24 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 /// Handler for CreateOrderCommand
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, OrderResult>
+public class CreateOrderCommandHandler(ILogger<CreateOrderCommandHandler> logger)
+    : IRequestHandler<CreateOrderCommand, OrderResult>
 {
-    private readonly ILogger<CreateOrderCommandHandler> _logger;
-
     // Simulated product database
     private static readonly Dictionary<int, (string Name, decimal Price, int Stock)> _products = new()
-    {
-        { 1, ("Laptop", 1299.99m, 15) },
-        { 2, ("Wireless Mouse", 29.99m, 50) },
-        { 3, ("Mechanical Keyboard", 149.99m, 25) },
-        { 4, ("USB-C Cable", 19.99m, 100) },
-        { 5, ("Monitor", 399.99m, 10) }
-    };
+{
+    { 1, ("Laptop", 1299.99m, 15) },
+    { 2, ("Wireless Mouse", 29.99m, 50) },
+    { 3, ("Mechanical Keyboard", 149.99m, 25) },
+    { 4, ("USB-C Cable", 19.99m, 100) },
+    { 5, ("Monitor", 399.99m, 10) }
+};
 
     private static int _nextOrderId = 100;
 
-    public CreateOrderCommandHandler(ILogger<CreateOrderCommandHandler> logger)
-    {
-        _logger = logger;
-    }
-
     public async ValueTask<OrderResult> HandleAsync(CreateOrderCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating order for customer {CustomerEmail} with {ItemCount} items",
+        logger.LogInformation("Creating order for customer {CustomerEmail} with {ItemCount} items",
             request.CustomerEmail, request.Items.Count);
 
         // Validate product availability
@@ -133,7 +128,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
 
         int orderId = Interlocked.Increment(ref _nextOrderId);
 
-        _logger.LogInformation("Order {OrderId} created successfully. Total: {TotalAmount:C}", orderId, totalAmount);
+        logger.LogInformation("Order {OrderId} created successfully. Total: {TotalAmount:C}", orderId, totalAmount);
 
         return OrderResult.Succeeded(orderId, totalAmount);
     }

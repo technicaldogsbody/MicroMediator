@@ -1,8 +1,9 @@
+
+namespace TechnicalDogsbody.MicroMediator.Tests;
+
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Tests;
 
 public class MediatorTests
 {
@@ -68,10 +69,7 @@ public class MediatorTests
     }
 
     [Fact]
-    public void Constructor_WithNullProvider_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new Mediator(null!));
-    }
+    public void Constructor_WithNullProvider_ThrowsArgumentNullException() => Assert.Throws<ArgumentNullException>(() => new Mediator(null!));
 
     [ExcludeFromCodeCoverage]
     private record TestRequest : IRequest<string>
@@ -82,9 +80,6 @@ public class MediatorTests
     [ExcludeFromCodeCoverage]
     private class TestRequestHandler : IRequestHandler<TestRequest, string>
     {
-        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult($"Handled: {request.Value}");
-        }
+        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken) => ValueTask.FromResult($"Handled: {request.Value}");
     }
 }

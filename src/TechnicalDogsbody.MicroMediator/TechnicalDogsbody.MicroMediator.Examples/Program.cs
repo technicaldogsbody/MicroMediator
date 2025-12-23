@@ -1,16 +1,17 @@
 using FluentValidation;
+using Scalar.AspNetCore;
 using TechnicalDogsbody.MicroMediator;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-using TechnicalDogsbody.MicroMediator.Examples;
 using TechnicalDogsbody.MicroMediator.Examples.Behaviors;
 using TechnicalDogsbody.MicroMediator.Examples.Commands;
-using TechnicalDogsbody.MicroMediator.Examples.Providers;
 using TechnicalDogsbody.MicroMediator.Examples.Queries;
+using TechnicalDogsbody.MicroMediator.Examples.StreamingQueries;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
 
 // Register SimpleMediator with fully explicit, zero-reflection configuration
 // Behavior execution order (reverse of registration):
@@ -30,6 +31,9 @@ builder.Services
     .AddHandler<CreateOrderCommandHandler>()
     .AddHandler<UpdateProductPriceCommandHandler>()
     .AddHandler<CancelOrderCommandHandler>()
+    // Streaming handlers
+    .AddStreamHandler<ExportProductsByCategoryHandler>()
+    .AddStreamHandler<StreamCustomerOrdersHandler>()
     // Validators
     .AddValidator<CreateOrderCommandValidator>()
     .AddValidator<UpdateProductPriceCommandValidator>()
@@ -52,6 +56,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options => options.WithTitle("MicroMediator Examples API")
+               .WithTheme(ScalarTheme.Purple)
+               .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient));
+    
+    // Redirect root to Scalar UI
+    app.MapGet("/", () => Results.Redirect("/scalar/v1"))
+       .ExcludeFromDescription();
 }
 
 app.UseHttpsRedirection();
@@ -70,7 +81,8 @@ app.MapGet("/api/products/{id:int}", async (int id, IMediator mediator) =>
         : Results.NotFound(new { message = $"Product {id} not found" });
 })
 .WithName("GetProduct")
-.WithDescription("Get product by ID - results are cached for 10 minutes");
+.WithSummary("Get product by ID")
+.WithDescription("Retrieves a product by its ID. Results are cached for 10 minutes.");
 
 app.MapGet("/api/products", async (
     string? searchTerm,
@@ -93,7 +105,8 @@ app.MapGet("/api/products", async (
     return Results.Ok(products);
 })
 .WithName("SearchProducts")
-.WithDescription("Search products with optional filters");
+.WithSummary("Search products")
+.WithDescription("Search products with optional filters for category, price range, and stock status.");
 
 app.MapGet("/api/customers/{email}/orders", async (string email, IMediator mediator) =>
 {
@@ -108,7 +121,8 @@ app.MapGet("/api/customers/{email}/orders", async (string email, IMediator media
     });
 })
 .WithName("GetCustomerOrders")
-.WithDescription("Get customer order history - results are cached for 5 minutes");
+.WithSummary("Get customer order history")
+.WithDescription("Retrieves all orders for a customer. Results are cached for 5 minutes.");
 
 // ========================================
 // COMMAND ENDPOINTS (Write Operations)
@@ -133,7 +147,8 @@ app.MapPost("/api/orders", async (CreateOrderCommand command, IMediator mediator
     }
 })
 .WithName("CreateOrder")
-.WithDescription("Create a new order - validates items and stock availability");
+.WithSummary("Create a new order")
+.WithDescription("Creates a new order with validation for items and stock availability.");
 
 app.MapPut("/api/products/{id:int}/price", async (int id, decimal newPrice, string? reason, IMediator mediator) =>
 {
@@ -161,7 +176,8 @@ app.MapPut("/api/products/{id:int}/price", async (int id, decimal newPrice, stri
     }
 })
 .WithName("UpdateProductPrice")
-.WithDescription("Update product price with optional reason");
+.WithSummary("Update product price")
+.WithDescription("Updates product price with optional reason. All price changes are audited.");
 
 app.MapPost("/api/orders/{id:int}/cancel", async (int id, CancelOrderRequest request, IMediator mediator) =>
 {
@@ -188,50 +204,98 @@ app.MapPost("/api/orders/{id:int}/cancel", async (int id, CancelOrderRequest req
     }
 })
 .WithName("CancelOrder")
-.WithDescription("Cancel an order with reason");
+.WithSummary("Cancel an order")
+.WithDescription("Cancels an order with a required reason. The operation is audited.");
 
 // ========================================
-// DEMO / TEST ENDPOINTS
+// STREAMING ENDPOINTS
 // ========================================
 
-app.MapGet("/", () => Results.Ok(new
+app.MapGet("/api/products/export", async (
+    string? category,
+    bool activeOnly,
+    IMediator mediator,
+    CancellationToken cancellationToken) =>
 {
-    title = "TechnicalDogsbody.SimpleMediator Examples",
-    description = "Demonstrates CQRS pattern with validation, logging, caching, and custom behaviors",
-    version = "2.0.0",
-    endpoints = new
+    var query = new ExportProductsByCategoryQuery
     {
-        products = new[]
+        Category = category,
+        ActiveOnly = activeOnly
+    };
+
+    var results = new List<object>();
+    int count = 0;
+
+    await foreach (var product in mediator.StreamAsync(query, cancellationToken))
+    {
+        count++;
+        results.Add(new
         {
-            "GET /api/products - Search products",
-            "GET /api/products/{id} - Get product by ID (cached)"
-        },
-        orders = new[]
+            product.Id,
+            product.Name,
+            product.Category,
+            product.Price,
+            product.StockQuantity
+        });
+
+        // Limit response size for demo purposes
+        if (count >= 100)
         {
-            "POST /api/orders - Create new order (validated)",
-            "GET /api/customers/{email}/orders - Get order history (cached)",
-            "POST /api/orders/{id}/cancel - Cancel order (validated)"
-        },
-        admin = new[]
-        {
-            "PUT /api/products/{id}/price - Update product price (audited)"
+            results.Add(new { message = "... (truncated to 100 items for demo)" });
+            break;
         }
-    },
-    features = new[]
-    {
-        "✅ CQRS with Mediator pattern",
-        "✅ FluentValidation integration",
-        "✅ Request/response caching",
-        "✅ Structured logging with LoggerMessage",
-        "✅ Performance monitoring",
-        "✅ Audit trail for commands",
-        "✅ Automatic retry on transient failures",
-        "✅ Zero-allocation static generic caching",
-        "✅ Zero reflection - fully AOT compatible"
     }
-}))
-.WithName("Root")
-.WithDescription("API information and available endpoints");
+
+    return Results.Ok(new
+    {
+        category = category ?? "all",
+        activeOnly,
+        totalReturned = count,
+        products = results
+    });
+})
+.WithName("ExportProducts")
+.WithSummary("Export products (streaming)")
+.WithDescription("Exports products using IAsyncEnumerable streaming for memory efficiency. Supports filtering by category and active status.");
+
+app.MapGet("/api/customers/{email}/orders/stream", async (
+    string email,
+    DateTime? fromDate,
+    DateTime? toDate,
+    IMediator mediator,
+    CancellationToken cancellationToken) =>
+{
+    var query = new StreamCustomerOrdersQuery
+    {
+        CustomerEmail = email,
+        FromDate = fromDate,
+        ToDate = toDate
+    };
+
+    var orders = new List<object>();
+
+    await foreach (var order in mediator.StreamAsync(query, cancellationToken))
+    {
+        orders.Add(new
+        {
+            order.Id,
+            order.TotalAmount,
+            order.Status,
+            order.CreatedAt,
+            itemCount = order.Items.Count
+        });
+    }
+
+    return Results.Ok(new
+    {
+        customerEmail = email,
+        orderCount = orders.Count,
+        orders
+    });
+})
+.WithName("StreamCustomerOrders")
+.WithSummary("Stream customer orders")
+.WithDescription("Streams customer orders with optional date filtering. Demonstrates efficient streaming of filtered results.");
 
 app.Run();
 
@@ -239,10 +303,7 @@ app.Run();
 // REQUEST MODELS
 // ========================================
 
-namespace TechnicalDogsbody.MicroMediator.Examples
+internal record CancelOrderRequest
 {
-    internal record CancelOrderRequest
-    {
-        public required string Reason { get; init; }
-    }
+    public required string Reason { get; init; }
 }

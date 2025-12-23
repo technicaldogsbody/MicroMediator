@@ -1,9 +1,10 @@
+
+namespace TechnicalDogsbody.MicroMediator.Behaviors;
+
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Behaviors;
 
 /// <summary>
 /// Logs request execution with timing and exception details.
@@ -12,7 +13,7 @@ namespace TechnicalDogsbody.MicroMediator.Behaviors;
 /// <typeparam name="TRequest">The type of request being logged.</typeparam>
 /// <typeparam name="TResponse">The type of response.</typeparam>
 public sealed partial class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+where TRequest : IRequest<TResponse>
 {
     private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;
 

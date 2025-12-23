@@ -14,16 +14,16 @@ public class CacheProviderIntegrationTests
             .AddCachingPipeline<TrackingCacheProvider>();
 
         var provider = services.BuildServiceProvider();
-        
+
         // Debug: Check what's registered
         var cacheProviderFromDI = provider.GetRequiredService<ICacheProvider>();
         Assert.IsType<TrackingCacheProvider>(cacheProviderFromDI);
-        
+
         // Verify behavior is registered
         var behaviors = provider.GetServices<IPipelineBehavior<UniqueCacheableRequest, string>>().ToList();
         Assert.Single(behaviors);
         Assert.IsType<TechnicalDogsbody.MicroMediator.Behaviors.CachingBehavior<UniqueCacheableRequest, string>>(behaviors[0]);
-        
+
         var mediator = provider.GetRequiredService<IMediator>();
         var cacheProvider = cacheProviderFromDI as TrackingCacheProvider;
 
@@ -123,14 +123,14 @@ public class CacheProviderIntegrationTests
     [ExcludeFromCodeCoverage]
     private class TrackingCacheProvider : ICacheProvider
     {
-        private readonly Dictionary<string, object> _cache = new();
+        private readonly Dictionary<string, object> _cache = [];
         public int TryGetCallCount { get; private set; }
         public int SetCallCount { get; private set; }
 
         public bool TryGet<TResponse>(string cacheKey, out TResponse? value)
         {
             TryGetCallCount++;
-            
+
             if (_cache.TryGetValue(cacheKey, out object? obj))
             {
                 value = (TResponse)obj;

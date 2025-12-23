@@ -1,6 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
 
 namespace TechnicalDogsbody.MicroMediator.Examples.Models;
+
+using System.Diagnostics.CodeAnalysis;
 
 /// <summary>
 /// Product entity

@@ -1,3 +1,7 @@
+
+#pragma warning disable CA1822
+namespace TechnicalDogsbody.MicroMediator.Benchmarks;
+
 using BenchmarkDotNet.Attributes;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,8 +9,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
-
-namespace TechnicalDogsbody.MicroMediator.Benchmarks;
 
 [MemoryDiagnoser]
 [ExcludeFromCodeCoverage]
@@ -47,16 +49,10 @@ public class RegistrationBenchmarks
     }
 
     [Benchmark(Baseline = true)]
-    public async Task<int> Explicit_Registration_Send()
-    {
-        return await _explicitMediator.SendAsync(new RegistrationQuery { Value = 42 });
-    }
+    public async Task<int> Explicit_Registration_Send() => await _explicitMediator.SendAsync(new RegistrationQuery { Value = 42 });
 
     [Benchmark]
-    public async Task<int> Reflection_Registration_Send()
-    {
-        return await _reflectionMediator.SendAsync(new RegistrationQuery { Value = 42 });
-    }
+    public async Task<int> Reflection_Registration_Send() => await _reflectionMediator.SendAsync(new RegistrationQuery { Value = 42 });
 
     [Benchmark]
     public async Task<int> Explicit_Registration_ColdStart()
@@ -98,10 +94,7 @@ public class RegistrationBenchmarks
 
     public class RegistrationQueryHandler : Abstractions.IRequestHandler<RegistrationQuery, int>
     {
-        public ValueTask<int> HandleAsync(RegistrationQuery request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult(request.Value * 2);
-        }
+        public ValueTask<int> HandleAsync(RegistrationQuery request, CancellationToken cancellationToken) => ValueTask.FromResult(request.Value * 2);
     }
 
     public class RegistrationQueryValidator : AbstractValidator<RegistrationQuery>

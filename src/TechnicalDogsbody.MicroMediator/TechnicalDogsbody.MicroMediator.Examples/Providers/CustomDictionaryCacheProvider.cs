@@ -43,7 +43,7 @@ public sealed class CustomDictionaryCacheProvider(ILogger<CustomDictionaryCacheP
         };
 
         _cache[cacheKey] = entry;
-        logger.LogInformation("Cached value for key: {CacheKey}, expires: {ExpiresAt}", 
+        logger.LogInformation("Cached value for key: {CacheKey}, expires: {ExpiresAt}",
             cacheKey, entry.ExpiresAt);
     }
 

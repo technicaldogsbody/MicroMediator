@@ -22,7 +22,7 @@ public record SearchProductsQuery : IRequest<List<Product>>
 /// </summary>
 [ExcludeFromCodeCoverage]
 public class SearchProductsQueryHandler(ILogger<SearchProductsQueryHandler> logger)
-    : IRequestHandler<SearchProductsQuery, List<Product>>
+: IRequestHandler<SearchProductsQuery, List<Product>>
 {
     // Simulated database
     private static readonly List<Product> _products =
@@ -37,11 +37,8 @@ public class SearchProductsQueryHandler(ILogger<SearchProductsQueryHandler> logg
 
     public async ValueTask<List<Product>> HandleAsync(SearchProductsQuery request, CancellationToken cancellationToken)
     {
-        if (logger.IsEnabled(LogLevel.Information))
-        {
-            logger.LogInformation("Searching products with filters: SearchTerm={SearchTerm}, Category={Category}",
-                request.SearchTerm, request.Category);
-        }
+        logger.LogInformation("Searching products with filters: SearchTerm={SearchTerm}, Category={Category}",
+            request.SearchTerm, request.Category);
 
         // Simulate database delay
         await Task.Delay(100, cancellationToken);

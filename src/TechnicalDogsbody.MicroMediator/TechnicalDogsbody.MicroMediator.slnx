@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
   <Project Path="TechnicalDogsbody.MicroMediator.Benchmarks/TechnicalDogsbody.MicroMediator.Benchmarks.csproj" Id="4028138f-c8de-463e-8f53-0f9abda51ddb" />
   <Project Path="TechnicalDogsbody.MicroMediator.Examples/TechnicalDogsbody.MicroMediator.Examples.csproj" Id="c8f6151f-8dc4-4b93-a6c1-b66fa869a32f" />
   <Project Path="TechnicalDogsbody.MicroMediator.Tests/TechnicalDogsbody.MicroMediator.Tests.csproj" Id="58265c07-61b9-4488-ab6c-a32bc7f64d81" />

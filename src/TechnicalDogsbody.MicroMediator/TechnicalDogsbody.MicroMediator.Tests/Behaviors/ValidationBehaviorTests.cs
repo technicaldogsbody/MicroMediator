@@ -1,10 +1,11 @@
+
+namespace TechnicalDogsbody.MicroMediator.Tests.Behaviors;
+
 using System.Diagnostics.CodeAnalysis;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.Extensions.DependencyInjection;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Tests.Behaviors;
 
 public class ValidationBehaviorTests
 {
@@ -74,7 +75,7 @@ public class ValidationBehaviorTests
             mediator.SendAsync(new TestRequest { Value = "" }).AsTask());
 
         // Both validators should report errors
-        Assert.True(exception.Errors.Count() >= 1);
+        Assert.True(exception.Errors.Any());
     }
 
     [Fact]
@@ -143,10 +144,7 @@ public class ValidationBehaviorTests
     [ExcludeFromCodeCoverage]
     private class TestRequestHandler : IRequestHandler<TestRequest, string>
     {
-        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult($"Handled: {request.Value}");
-        }
+        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken) => ValueTask.FromResult($"Handled: {request.Value}");
     }
 
     [ExcludeFromCodeCoverage]

@@ -1,7 +1,8 @@
-using Microsoft.Extensions.Caching.Memory;
-using TechnicalDogsbody.MicroMediator.Abstractions;
 
 namespace TechnicalDogsbody.MicroMediator.Providers;
+
+using Microsoft.Extensions.Caching.Memory;
+using TechnicalDogsbody.MicroMediator.Abstractions;
 
 /// <summary>
 /// IMemoryCache implementation of ICacheProvider.
@@ -12,10 +13,7 @@ public sealed class MemoryCacheProvider(IMemoryCache cache) : ICacheProvider
     private readonly IMemoryCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
 
     /// <inheritdoc />
-    public bool TryGet<TResponse>(string cacheKey, out TResponse? value)
-    {
-        return _cache.TryGetValue(cacheKey, out value);
-    }
+    public bool TryGet<TResponse>(string cacheKey, out TResponse? value) => _cache.TryGetValue(cacheKey, out value);
 
     /// <inheritdoc />
     public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration)

@@ -1,8 +1,9 @@
+
+namespace TechnicalDogsbody.MicroMediator.Behaviors;
+
 using System.Runtime.CompilerServices;
 using FluentValidation;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Behaviors;
 
 /// <summary>
 /// Validates requests using FluentValidation before they reach the handler.
@@ -11,8 +12,8 @@ namespace TechnicalDogsbody.MicroMediator.Behaviors;
 /// <typeparam name="TRequest">The type of request being validated.</typeparam>
 /// <typeparam name="TResponse">The type of response.</typeparam>
 public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
-    : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+: IPipelineBehavior<TRequest, TResponse>
+where TRequest : IRequest<TResponse>
 {
     private readonly IValidator<TRequest>[] _validators = validators?.ToArray() ?? [];
 

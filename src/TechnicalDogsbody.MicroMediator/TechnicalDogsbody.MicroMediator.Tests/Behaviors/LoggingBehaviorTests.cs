@@ -1,9 +1,10 @@
+
+namespace TechnicalDogsbody.MicroMediator.Tests.Behaviors;
+
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TechnicalDogsbody.MicroMediator.Abstractions;
-
-namespace TechnicalDogsbody.MicroMediator.Tests.Behaviors;
 
 public class LoggingBehaviorTests
 {
@@ -84,10 +85,7 @@ public class LoggingBehaviorTests
     [ExcludeFromCodeCoverage]
     private class TestRequestHandler : IRequestHandler<TestRequest, string>
     {
-        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken)
-        {
-            return ValueTask.FromResult($"Handled: {request.Value}");
-        }
+        public ValueTask<string> HandleAsync(TestRequest request, CancellationToken cancellationToken) => ValueTask.FromResult($"Handled: {request.Value}");
     }
 
     [ExcludeFromCodeCoverage]
@@ -96,10 +94,7 @@ public class LoggingBehaviorTests
     [ExcludeFromCodeCoverage]
     private class ThrowingRequestHandler : IRequestHandler<ThrowingRequest, string>
     {
-        public ValueTask<string> HandleAsync(ThrowingRequest request, CancellationToken cancellationToken)
-        {
-            throw new InvalidOperationException("Handler exception");
-        }
+        public ValueTask<string> HandleAsync(ThrowingRequest request, CancellationToken cancellationToken) => throw new InvalidOperationException("Handler exception");
     }
 
     [ExcludeFromCodeCoverage]
@@ -118,7 +113,7 @@ public class LoggingBehaviorTests
     [ExcludeFromCodeCoverage]
     private class TestLogger<T> : ILogger<T>
     {
-        public List<string> Messages { get; } = new();
+        public List<string> Messages { get; } = [];
         public int LogCount { get; private set; }
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;

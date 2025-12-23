@@ -1,4 +1,4 @@
-﻿root = true
+root = true
 
 # All files
 [*]
@@ -251,5 +251,4 @@ dotnet_diagnostic.CA2242.severity = warning
 dotnet_diagnostic.RCS1036.severity = suggestion  # Remove redundant empty line
 dotnet_diagnostic.RCS1194.severity = none  # Implement exception constructors (often overkill)
 
-dotnet_diagnostic.S2094.severity = suggestion  #TODO remove when in build
-dotnet_diagnostic.S2139.severity = suggestion  #TODO remove when in build
+dotnet_diagnostic.CA1873.severity = none

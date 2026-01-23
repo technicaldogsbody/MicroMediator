@@ -16,6 +16,9 @@ using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
 /// </summary>
 [MemoryDiagnoser]
 [ExcludeFromCodeCoverage]
+[JsonExporterAttribute.Brief]
+[AsciiDocExporter]
+[KeepBenchmarkFiles]
 public class StreamingComparisonBenchmarks
 {
     private IMediator _microMediator = null!;

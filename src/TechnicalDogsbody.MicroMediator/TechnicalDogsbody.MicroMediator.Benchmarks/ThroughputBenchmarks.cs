@@ -12,6 +12,9 @@ using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
 [MemoryDiagnoser]
 [SimpleJob(warmupCount: 3, iterationCount: 10)]
 [ExcludeFromCodeCoverage]
+[JsonExporterAttribute.Brief]
+[AsciiDocExporter]
+[KeepBenchmarkFiles]
 public class ThroughputBenchmarks
 {
     private ServiceProvider _simpleMediatorProvider = null!;

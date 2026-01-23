@@ -12,6 +12,9 @@ using TechnicalDogsbody.MicroMediator.Abstractions;
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 [ExcludeFromCodeCoverage]
+[JsonExporterAttribute.Brief]
+[AsciiDocExporter]
+[KeepBenchmarkFiles]
 public class CachingBenchmarks
 {
     private ServiceProvider _simpleMediatorProvider = null!;

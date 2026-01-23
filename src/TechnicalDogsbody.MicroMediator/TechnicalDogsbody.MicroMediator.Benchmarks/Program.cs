@@ -1,7 +1,9 @@
 
 namespace TechnicalDogsbody.MicroMediator.Benchmarks;
 
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 [ExcludeFromCodeCoverage]

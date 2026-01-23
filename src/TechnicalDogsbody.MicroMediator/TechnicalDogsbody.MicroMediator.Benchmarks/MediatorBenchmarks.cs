@@ -11,6 +11,9 @@ using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 [ExcludeFromCodeCoverage]
+[JsonExporterAttribute.Brief]
+[AsciiDocExporter]
+[KeepBenchmarkFiles]
 public class MediatorBenchmarks
 {
     private ServiceProvider _simpleMediatorProvider = null!;

@@ -12,6 +12,9 @@ using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
 
 [MemoryDiagnoser]
 [ExcludeFromCodeCoverage]
+[JsonExporterAttribute.Brief]
+[AsciiDocExporter]
+[KeepBenchmarkFiles]
 public class RegistrationBenchmarks
 {
     private ServiceProvider _explicitProvider = null!;

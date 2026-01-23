@@ -15,6 +15,9 @@ using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
 [ExcludeFromCodeCoverage]
+[JsonExporterAttribute.Brief]
+[AsciiDocExporter]
+[KeepBenchmarkFiles]
 public class PipelineBenchmarks
 {
     private ServiceProvider _simpleMediatorProvider = null!;

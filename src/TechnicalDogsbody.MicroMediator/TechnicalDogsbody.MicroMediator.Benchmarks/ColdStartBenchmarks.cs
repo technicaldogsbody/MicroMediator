@@ -12,6 +12,9 @@ using IMediator = TechnicalDogsbody.MicroMediator.Abstractions.IMediator;
 [MemoryDiagnoser]
 [SimpleJob(warmupCount: 0, iterationCount: 1, invocationCount: 1)]
 [ExcludeFromCodeCoverage]
+[JsonExporterAttribute.Brief]
+[AsciiDocExporter]
+[KeepBenchmarkFiles]
 public class ColdStartBenchmarks
 {
     [Benchmark(Baseline = true)]

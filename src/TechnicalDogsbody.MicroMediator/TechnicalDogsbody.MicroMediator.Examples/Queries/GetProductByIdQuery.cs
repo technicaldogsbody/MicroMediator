@@ -19,10 +19,9 @@ public record GetProductByIdQuery(int ProductId) : IRequest<Product?>, ICacheabl
 /// Handler for GetProductByIdQuery
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, Product?>
+public class GetProductByIdQueryHandler(ILogger<GetProductByIdQueryHandler> logger)
+    : IRequestHandler<GetProductByIdQuery, Product?>
 {
-    private readonly ILogger<GetProductByIdQueryHandler> _logger;
-
     // Simulated database
     private static readonly List<Product> _products =
     [
@@ -33,14 +32,9 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, P
     new() { Id = 5, Name = "Monitor", Description = "27-inch 4K monitor", Price = 399.99m, StockQuantity = 10, Category = "Electronics" }
     ];
 
-    public GetProductByIdQueryHandler(ILogger<GetProductByIdQueryHandler> logger)
-    {
-        _logger = logger;
-    }
-
     public async ValueTask<Product?> HandleAsync(GetProductByIdQuery request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Fetching product {ProductId} from database", request.ProductId);
+        logger.LogInformation("Fetching product {ProductId} from database", request.ProductId);
 
         // Simulate database delay
         await Task.Delay(50, cancellationToken);

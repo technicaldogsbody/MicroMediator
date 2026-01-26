@@ -5,44 +5,17 @@
 [![NuGet](https://img.shields.io/nuget/v/TechnicalDogsbody.MicroMediator.svg)](https://www.nuget.org/packages/TechnicalDogsbody.MicroMediator/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A lightweight, high-performance mediator pattern implementation for .NET with built-in validation, logging, caching, and streaming support. Zero commercial licensing concerns.
+A lightweight, high-performance mediator pattern implementation for .NET with built-in validation, logging, caching, and streaming support.
 
-## Why MicroMediator?
+## Features
 
-MicroMediator outperforms MediatR across all metrics whilst maintaining a cleaner API and zero licensing costs.
-
-### Performance Comparison vs MediatR 11
-
-| Benchmark | MicroMediator | MediatR | Advantage |
-|-----------|----------------|---------|-----------|
-| **Basic Send** | 23 ns | 55 ns | **2.4x faster** |
-| **Cold Start** | 83 μs | 697 μs | **8.4x faster** |
-| **Pipeline (Validation)** | 423 ns | 1000 ns | **2.4x faster** |
-| **Streaming (100 items)** | 51 μs | N/A | Native support |
-| **Streaming (1,000 items)** | 431 μs | N/A | Native support |
-| **Streaming (5,000 items)** | 2.08 ms | N/A | Native support |
-| **Throughput (10k sequential)** | 177 μs | 568 μs | **3.2x faster** |
-| **Throughput (10k parallel)** | 340 μs | 748 μs | **2.2x faster** |
-
-### Memory Efficiency
-
-| Scenario | MicroMediator | MediatR | Savings |
-|----------|----------------|---------|---------|
-| **Single Request** | 96 B | 296 B | **3.1x less** |
-| **100 Requests** | 2.41 KB | 21.59 KB | **9x less** |
-| **10,000 Requests** | 234 KB | 2,187 KB | **9.3x less** |
-
-### Key Features
-
-- **2-8x faster** than MediatR across all scenarios
-- **3-10x less memory allocation**
-- **Zero commercial licensing costs** (MediatR 12+ requires paid licence)
-- **Fluent builder API** for clean, readable configuration
-- **Built-in behaviours**: Validation, Logging, Caching
-- **Native streaming support** with `IAsyncEnumerable<T>`
-- **ValueTask optimisation** for zero-allocation fast paths
-- **AOT-compatible** with minimal reflection (registration only)
-- **Cold start optimised** (8.4x faster than MediatR)
+- **Fast execution** - Optimised request handling with ValueTask and aggressive caching
+- **Low memory footprint** - Minimal allocations through efficient dispatch mechanisms
+- **Native streaming** - Built-in `IAsyncEnumerable<T>` support for large datasets
+- **Fluent configuration** - Clean, readable service registration
+- **Built-in behaviours** - Validation, logging, and caching out of the box
+- **AOT compatible** - Minimal reflection, explicit registration available
+- **MIT licence** - Use freely in commercial projects
 
 ## Installation
 
@@ -52,7 +25,7 @@ dotnet add package TechnicalDogsbody.MicroMediator
 
 ## Quick Start
 
-### 1. Define Your Request and Handler
+### Define Request and Handler
 
 ```csharp
 // Query (read operation)
@@ -65,7 +38,6 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, P
 {
     public ValueTask<Product?> HandleAsync(GetProductByIdQuery request, CancellationToken cancellationToken)
     {
-        // Your logic here
         var product = _repository.GetById(request.Id);
         return ValueTask.FromResult(product);
     }
@@ -82,14 +54,13 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
 {
     public async ValueTask<OrderResult> HandleAsync(CreateOrderCommand request, CancellationToken cancellationToken)
     {
-        // Your logic here
         var orderId = await _orderService.CreateOrderAsync(request);
         return OrderResult.Success(orderId);
     }
 }
 ```
 
-### 2. Register with Dependency Injection
+### Register Services
 
 ```csharp
 builder.Services
@@ -100,7 +71,7 @@ builder.Services
     .AddDefaultCachingPipeline();
 ```
 
-### 3. Use in Your Code
+### Use in Controllers
 
 ```csharp
 public class ProductController : ControllerBase
@@ -118,9 +89,7 @@ public class ProductController : ControllerBase
         var query = new GetProductByIdQuery { Id = id };
         var product = await _mediator.SendAsync(query);
         
-        return product is not null 
-            ? Ok(product) 
-            : NotFound();
+        return product is not null ? Ok(product) : NotFound();
     }
 
     [HttpPost]
@@ -134,28 +103,19 @@ public class ProductController : ControllerBase
 }
 ```
 
-## Advanced Features
+## Streaming Requests
 
-### Streaming Requests
+Stream large datasets efficiently without loading everything into memory.
 
-MicroMediator provides native support for streaming large datasets efficiently using `IAsyncEnumerable<T>`. This is perfect for scenarios like:
-
-- Paginating large result sets
-- Processing data that doesn't fit in memory
-- Real-time data feeds
-- Exporting large reports
-
-#### Basic Streaming
+### Basic Streaming
 
 ```csharp
-// Define a streaming request
 public record StreamProductsQuery : IStreamRequest<Product>
 {
     public string? CategoryFilter { get; init; }
     public decimal? MinPrice { get; init; }
 }
 
-// Handler yields results as they're retrieved
 public class StreamProductsQueryHandler : IStreamRequestHandler<StreamProductsQuery, Product>
 {
     private readonly IProductRepository _repository;
@@ -177,22 +137,19 @@ public class StreamProductsQueryHandler : IStreamRequestHandler<StreamProductsQu
     }
 }
 
-// Usage - process items as they arrive
+// Process items as they arrive
 var query = new StreamProductsQuery { MinPrice = 50 };
 
 await foreach (var product in _mediator.CreateStream(query))
 {
     Console.WriteLine($"{product.Name}: {product.Price:C}");
-    // Process each product immediately without loading entire result set
 }
 ```
 
-#### Early Exit with Streaming
-
-Streaming allows efficient early termination:
+### Early Exit
 
 ```csharp
-// Take first 50 matching products, then stop
+// Process only first 50 matching products
 var expensiveProducts = _mediator
     .CreateStream(new StreamProductsQuery { MinPrice = 1000 })
     .Take(50);
@@ -203,16 +160,16 @@ await foreach (var product in expensiveProducts)
 }
 ```
 
-#### Performance Characteristics
+### Memory Efficiency
 
-**Memory Usage**: Streaming keeps memory footprint constant regardless of result size:
+Streaming keeps memory constant regardless of result size:
 
 ```csharp
 // Traditional: Loads all 5,000 products into memory (~1.5 MB)
 var allProducts = await _mediator.SendAsync(new GetAllProductsQuery());
 var total = allProducts.Sum(p => p.Price);
 
-// Streaming: Processes one at a time (~30 KB peak memory)
+// Streaming: Processes one at a time (~15 KB peak memory)
 var total = 0m;
 await foreach (var product in _mediator.CreateStream(new StreamProductsQuery()))
 {
@@ -220,45 +177,9 @@ await foreach (var product in _mediator.CreateStream(new StreamProductsQuery()))
 }
 ```
 
-**Benchmark Results** (processing 5,000 items):
+## Request Caching
 
-| Operation | Load All | Stream ToList | Stream Process | Stream Take(50) |
-|-----------|----------|---------------|----------------|------------------|
-| Time | 1.66 ms | 2.08 ms | 2.08 ms | 29.2 μs |
-| Memory | 1,485 KB | 1,485 KB | 1,446 KB | 14.8 KB |
-
-Key insights:
-- **Early exit**: 57x faster when you don't need all results
-- **Memory efficiency**: 50-100x less memory for processing-only scenarios
-- **Minimal overhead**: Only ~25% slower when collecting all results
-
-### Fluent Configuration
-
-```csharp
-builder.Services
-    .AddMediator()
-    // Register handlers (discovers interfaces automatically)
-    .AddHandler<GetProductByIdQueryHandler>()
-    .AddHandler<SearchProductsQueryHandler>()
-    .AddHandler<CreateOrderCommandHandler>()
-    
-    // Register validators (automatically adds ValidationBehavior)
-    .AddValidator<CreateOrderCommandValidator>()
-    .AddValidator<UpdateProductCommandValidator>()
-    
-    // Add built-in pipeline behaviours
-    .AddDefaultLoggingPipeline()
-    .AddDefaultCachingPipeline()
-    
-    // Add custom pipeline behaviours
-    .AddBehavior(typeof(PerformanceMonitoringBehavior<,>))
-    .AddBehavior(typeof(AuditBehavior<,>))
-    .AddBehavior(typeof(RetryBehavior<,>));
-```
-
-### Request Caching
-
-Implement `ICacheableRequest` on your queries for automatic caching:
+Implement `ICacheableRequest` for automatic caching:
 
 ```csharp
 public record GetProductByIdQuery : IRequest<Product?>, ICacheableRequest
@@ -270,9 +191,7 @@ public record GetProductByIdQuery : IRequest<Product?>, ICacheableRequest
 }
 ```
 
-#### Default Memory Cache
-
-When you call `AddDefaultCachingPipeline()`, the `CachingBehavior` automatically caches responses using `IMemoryCache`:
+### Default Memory Cache
 
 ```csharp
 builder.Services
@@ -281,9 +200,9 @@ builder.Services
     .AddDefaultCachingPipeline(); // Uses IMemoryCache
 ```
 
-#### Custom Cache Providers
+### Custom Cache Providers
 
-MicroMediator's caching is extensible through the `ICacheProvider` abstraction. Swap in FusionCache, Redis, or any custom implementation:
+Swap in FusionCache, Redis, or any custom implementation through `ICacheProvider`:
 
 ```csharp
 // Use FusionCache
@@ -298,7 +217,7 @@ builder.Services
     .AddBehavior(typeof(CachingBehavior<,>));
 ```
 
-**Example: FusionCache Provider**
+**FusionCache Example**
 
 ```csharp
 public class FusionCacheProvider : ICacheProvider
@@ -330,62 +249,9 @@ public class FusionCacheProvider : ICacheProvider
 }
 ```
 
-**Example: Redis Distributed Cache Provider**
+## FluentValidation Integration
 
-```csharp
-public class RedisCacheProvider : ICacheProvider
-{
-    private readonly IDistributedCache _cache;
-    private readonly ILogger<RedisCacheProvider> _logger;
-    
-    public RedisCacheProvider(IDistributedCache cache, ILogger<RedisCacheProvider> logger)
-    {
-        _cache = cache;
-        _logger = logger;
-    }
-    
-    public bool TryGet<TResponse>(string cacheKey, out TResponse? value)
-    {
-        try
-        {
-            var bytes = _cache.Get(cacheKey);
-            if (bytes != null)
-            {
-                value = JsonSerializer.Deserialize<TResponse>(bytes);
-                return value != null;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving from Redis: {CacheKey}", cacheKey);
-        }
-        
-        value = default;
-        return false;
-    }
-    
-    public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration)
-    {
-        try
-        {
-            var bytes = JsonSerializer.SerializeToUtf8Bytes(value);
-            var options = new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = duration
-            };
-            _cache.Set(cacheKey, bytes, options);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error storing in Redis: {CacheKey}", cacheKey);
-        }
-    }
-}
-```
-
-### FluentValidation Integration
-
-Add validators and MicroMediator automatically wires up validation:
+Add validators and MicroMediator wires up validation automatically:
 
 ```csharp
 public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
@@ -402,16 +268,15 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
     }
 }
 
-// Registration
 builder.Services
     .AddMediator()
     .AddHandler<CreateOrderCommandHandler>()
-    .AddValidator<CreateOrderCommandValidator>(); // Automatically adds ValidationBehavior
+    .AddValidator<CreateOrderCommandValidator>(); // Adds ValidationBehavior
 ```
 
-### Custom Pipeline Behaviours
+## Custom Pipeline Behaviours
 
-Create custom behaviours by implementing `IPipelineBehavior<TRequest, TResponse>`:
+Implement `IPipelineBehavior<TRequest, TResponse>` for cross-cutting concerns:
 
 ```csharp
 public class PerformanceMonitoringBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
@@ -449,30 +314,29 @@ public class PerformanceMonitoringBehavior<TRequest, TResponse> : IPipelineBehav
     }
 }
 
-// Register it
 builder.Services
     .AddMediator()
     .AddBehavior(typeof(PerformanceMonitoringBehavior<,>));
 ```
 
-## Pipeline Execution Order
+### Pipeline Execution Order
 
-Behaviours execute in **reverse order of registration** (last registered runs first):
+Behaviours execute in reverse order of registration (last registered runs first):
 
 ```csharp
 builder.Services
     .AddMediator()
     .AddHandler<MyHandler>()
-    .AddValidator<MyValidator>()      // 3. Validates (innermost)
-    .AddDefaultLoggingPipeline()      // 2. Logs
+    .AddValidator<MyValidator>()           // 3. Validates (innermost)
+    .AddDefaultLoggingPipeline()           // 2. Logs
     .AddBehavior(typeof(RetryBehavior<,>)); // 1. Retries (outermost)
 ```
 
 Request flow: `RetryBehavior` → `LoggingBehavior` → `ValidationBehavior` → `Handler`
 
-## Explicit Registration (Zero Reflection)
+## AOT Compatibility
 
-For maximum AOT compatibility and performance, use explicit type parameters:
+Use explicit type parameters for zero reflection:
 
 ```csharp
 builder.Services
@@ -483,18 +347,14 @@ builder.Services
 
 ## Use Cases
 
-### Perfect For
+MicroMediator fits well for:
 
-- **Serverless/Azure Functions** - 4.2x faster cold starts
-- **High-throughput APIs** - 2-3x faster request processing
-- **Memory-constrained environments** - 9x less allocation
+- **Serverless environments** - Fast cold starts and low memory usage
+- **High-throughput APIs** - Efficient request processing
+- **Memory-constrained systems** - Minimal allocations
 - **CQRS implementations** - Clean separation of commands and queries
-- **Projects avoiding commercial licences** - MediatR 12+ requires payment
-
-### When to Use MediatR Instead
-
-- You need notification/event broadcasting (MicroMediator focuses on request/response)
-- You're already using MediatR 11 and don't want to migrate
+- **Large dataset processing** - Native streaming support
+- **Commercial projects** - MIT licence with no restrictions
 
 ## Architecture
 
@@ -503,7 +363,7 @@ MicroMediator uses a wrapper pattern with dynamic dispatch and aggressive cachin
 1. **Static generic caching** - Each response type gets its own dictionary
 2. **ConcurrentDictionary** - Lock-free reads after first request
 3. **Wrapper instances** - Created once per request type
-4. **Handler/behavior caching** - Eliminates DI lookups on hot path
+4. **Handler caching** - Eliminates DI lookups on hot path
 5. **ValueTask** - Zero-allocation synchronous completions
 
 ## Examples
@@ -512,35 +372,76 @@ The `TechnicalDogsbody.MicroMediator.Examples` project demonstrates:
 
 - CQRS pattern with queries and commands
 - FluentValidation integration
-- Request caching
-- Streaming large datasets with `IAsyncEnumerable<T>`
+- Request caching with custom providers
+- Streaming large datasets
 - Custom pipeline behaviours (performance monitoring, audit trail, retry logic)
 - Structured logging
 - Complete Web API implementation
 
+Run the examples:
+
+```bash
+cd examples
+dotnet run
+```
+
 ## Benchmarks
 
-Run comprehensive benchmarks comparing MicroMediator to MediatR:
+The benchmark suite measures performance across various scenarios. All benchmarks run on .NET 10.0 to showcase peak performance characteristics.
+
+Run benchmarks:
 
 ```bash
 cd benchmarks
 dotnet run -c Release
 ```
 
-Includes:
-- Basic send performance
-- Pipeline overhead with validation
-- Caching performance (hit/miss)
-- Cold start performance
-- Streaming performance (100/1,000/5,000/10,000 items)
-- Early exit scenarios
-- Throughput at scale (100/1,000/10,000 requests)
-- Registration strategies (explicit vs reflection)
+### Core Performance
+
+| Scenario | Time (ns) | Memory |
+|----------|-----------|--------|
+| Basic Send | 24 | 96 B |
+| With Validation | 373 | 1.65 KB |
+| Cold Start | 434 μs | 9.53 KB |
+| Cache Hit | 105 | 272 B |
+| Cache Miss | 1,527 | 648 B |
+
+### Throughput (10,000 requests)
+
+| Mode | Time | Memory | Notes |
+|------|------|--------|-------|
+| Sequential | 181 μs | 234 KB | 2.6x faster than alternatives |
+| Parallel | 344 μs | 1,133 KB | 1.9x faster than alternatives |
+
+### Streaming Performance (5,000 items)
+
+| Operation | Time | Memory | Notes |
+|-----------|------|--------|-------|
+| Load All | 1.51 ms | 1,485 KB | Baseline |
+| Stream ToList | 2.40 ms | 1,485 KB | ~25% overhead |
+| Stream Process | 2.35 ms | 1,446 KB | 3% less memory |
+| Stream Take(50) | 33 μs | 15 KB | 46x faster, 99% less memory |
+
+### Large Dataset Stress Test (1,000,000 items)
+
+| Operation | Time | Memory | Notes |
+|-----------|------|--------|-------|
+| Early Exit (after 100) | 31 μs | 688 B | Constant time |
+| Complete Processing | 29.6 ms | 744 B | Linear scaling |
+| Count Only | 29.4 ms | 744 B | Minimal overhead |
+| ToList (limited 1000) | 336 μs | 40 KB | Bounded memory |
+
+Key findings:
+
+- **Early exit efficiency** - Streaming exits immediately when condition met, no wasted work
+- **Memory scaling** - Memory usage stays constant regardless of total dataset size
+- **Linear performance** - Processing time scales linearly with items consumed, not total size
+- **Bounded operations** - Take/limit operations maintain low memory even with massive datasets
 
 ## Requirements
 
-- .NET 8.0 or later
-- FluentValidation 11.10.0+ (optional, for validation support)
+- .NET 8.0, 9.0, or 10.0
+- FluentValidation 12.1.1+ (optional, for validation support)
 
 ## Licence
 
@@ -548,8 +449,8 @@ MIT
 
 ## Contributing
 
-Contributions welcome! Please open an issue before submitting large changes.
+Contributions welcome. Open an issue before submitting large changes.
 
 ## Acknowledgements
 
-Inspired by Jimmy Bogard's MediatR. Built from scratch with performance in mind.
+Inspired by the mediator pattern and Jimmy Bogard's MediatR. Built from scratch with performance and developer experience in mind.

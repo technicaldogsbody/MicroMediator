@@ -19,10 +19,10 @@ public record GetCustomerOrdersQuery(string CustomerEmail) : IRequest<List<Order
 /// Handler for GetCustomerOrdersQuery
 /// </summary>
 [ExcludeFromCodeCoverage]
-public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQuery, List<Order>>
+[method: ExcludeFromCodeCoverage]
+public class GetCustomerOrdersQueryHandler(ILogger<GetCustomerOrdersQueryHandler> logger)
+    : IRequestHandler<GetCustomerOrdersQuery, List<Order>>
 {
-    private readonly ILogger<GetCustomerOrdersQueryHandler> _logger;
-
     // Simulated database
     private static readonly List<Order> _orders =
     [
@@ -55,15 +55,9 @@ public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQu
     ];
 
     [ExcludeFromCodeCoverage]
-    public GetCustomerOrdersQueryHandler(ILogger<GetCustomerOrdersQueryHandler> logger)
-    {
-        _logger = logger;
-    }
-
-    [ExcludeFromCodeCoverage]
     public async ValueTask<List<Order>> HandleAsync(GetCustomerOrdersQuery request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Fetching orders for customer {CustomerEmail}", request.CustomerEmail);
+        logger.LogInformation("Fetching orders for customer {CustomerEmail}", request.CustomerEmail);
 
         // Simulate database delay
         await Task.Delay(150, cancellationToken);

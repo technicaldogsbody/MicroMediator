@@ -11,16 +11,11 @@ using TechnicalDogsbody.MicroMediator.Abstractions;
 /// <typeparam name="TRequest">Request type</typeparam>
 /// <typeparam name="TResponse">Response type</typeparam>
 [ExcludeFromCodeCoverage]
-public class PerformanceMonitoringBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-where TRequest : IRequest<TResponse>
+public class PerformanceMonitoringBehavior<TRequest, TResponse>(
+    ILogger<PerformanceMonitoringBehavior<TRequest, TResponse>> logger)
+    : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
 {
-    private readonly ILogger<PerformanceMonitoringBehavior<TRequest, TResponse>> _logger;
-
-    public PerformanceMonitoringBehavior(ILogger<PerformanceMonitoringBehavior<TRequest, TResponse>> logger)
-    {
-        _logger = logger;
-    }
-
     public async ValueTask<TResponse> HandleAsync(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
@@ -37,7 +32,7 @@ where TRequest : IRequest<TResponse>
             // Log warning if request takes longer than threshold
             if (stopwatch.ElapsedMilliseconds > 500)
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "?? SLOW REQUEST: {RequestName} took {ElapsedMilliseconds}ms (threshold: 500ms)",
                     requestName,
                     stopwatch.ElapsedMilliseconds);
@@ -48,7 +43,7 @@ where TRequest : IRequest<TResponse>
         catch (Exception)
         {
             stopwatch.Stop();
-            _logger.LogError(
+            logger.LogError(
                 "? REQUEST FAILED: {RequestName} failed after {ElapsedMilliseconds}ms",
                 requestName,
                 stopwatch.ElapsedMilliseconds);
@@ -63,16 +58,10 @@ where TRequest : IRequest<TResponse>
 /// <typeparam name="TRequest">Request type</typeparam>
 /// <typeparam name="TResponse">Response type</typeparam>
 [ExcludeFromCodeCoverage]
-public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-where TRequest : IRequest<TResponse>
+public class AuditBehavior<TRequest, TResponse>(ILogger<AuditBehavior<TRequest, TResponse>> logger)
+    : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
 {
-    private readonly ILogger<AuditBehavior<TRequest, TResponse>> _logger;
-
-    public AuditBehavior(ILogger<AuditBehavior<TRequest, TResponse>> logger)
-    {
-        _logger = logger;
-    }
-
     public async ValueTask<TResponse> HandleAsync(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
@@ -83,13 +72,13 @@ where TRequest : IRequest<TResponse>
         // Only audit commands (requests that end with "Command")
         if (requestName.EndsWith("Command"))
         {
-            _logger.LogInformation(
+            logger.LogInformation(
                 "?? AUDIT: Executing command {CommandName} at {Timestamp}",
                 requestName,
                 DateTime.UtcNow);
 
             // In a real application, you would save this to an audit log database
-            var auditEntry = new AuditEntry
+            new AuditEntry
             {
                 CommandName = requestName,
                 ExecutedAt = DateTime.UtcNow,
@@ -117,17 +106,12 @@ where TRequest : IRequest<TResponse>
 /// <typeparam name="TRequest">Request type</typeparam>
 /// <typeparam name="TResponse">Response type</typeparam>
 [ExcludeFromCodeCoverage]
-public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-where TRequest : IRequest<TResponse>
+public class RetryBehavior<TRequest, TResponse>(ILogger<RetryBehavior<TRequest, TResponse>> logger)
+    : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
 {
-    private readonly ILogger<RetryBehavior<TRequest, TResponse>> _logger;
     private const int MaxRetries = 3;
     private const int DelayMilliseconds = 100;
-
-    public RetryBehavior(ILogger<RetryBehavior<TRequest, TResponse>> logger)
-    {
-        _logger = logger;
-    }
 
     public async ValueTask<TResponse> HandleAsync(
         TRequest request,
@@ -147,7 +131,7 @@ where TRequest : IRequest<TResponse>
             }
             catch (Exception ex) when (IsTransientError(ex) && attempt < MaxRetries)
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "?? RETRY: {RequestName} failed (attempt {Attempt}/{MaxRetries}). Retrying in {Delay}ms. Error: {Error}",
                     requestName,
                     attempt,
@@ -160,10 +144,5 @@ where TRequest : IRequest<TResponse>
         }
     }
 
-    private static bool IsTransientError(Exception ex)
-    {
-        // In a real application, you would check for specific transient errors
-        // like TimeoutException, network errors, database deadlocks, etc.
-        return ex is TimeoutException or InvalidOperationException;
-    }
+    private static bool IsTransientError(Exception ex) => ex is TimeoutException or InvalidOperationException;
 }

@@ -31,8 +31,8 @@ public class StreamingBenchmarks
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddStreamHandler<StreamNumbersQuery, int, StreamNumbersHandler>()
-            .AddHandler<LoadNumbersQuery, List<int>, LoadNumbersHandler>();
+            .AddSingletonStreamHandler<StreamNumbersQuery, int, StreamNumbersHandler>()
+            .AddSingletonHandler<LoadNumbersQuery, List<int>, LoadNumbersHandler>();
 
         var provider = services.BuildServiceProvider();
         _mediator = provider.GetRequiredService<IMediator>();

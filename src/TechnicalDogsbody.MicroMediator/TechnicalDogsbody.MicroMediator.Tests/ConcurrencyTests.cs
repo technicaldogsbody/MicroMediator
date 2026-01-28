@@ -12,7 +12,7 @@ public class ConcurrencyTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<TestRequest, int, TestRequestHandler>();
+            .AddSingletonHandler<TestRequest, int, TestRequestHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -32,8 +32,8 @@ public class ConcurrencyTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<FirstRequest, string, FirstRequestHandler>()
-            .AddHandler<SecondRequest, int, SecondRequestHandler>();
+            .AddSingletonHandler<FirstRequest, string, FirstRequestHandler>()
+            .AddSingletonHandler<SecondRequest, int, SecondRequestHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -53,7 +53,7 @@ public class ConcurrencyTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<CancellableRequest, string, CancellableRequestHandler>();
+            .AddSingletonHandler<CancellableRequest, string, CancellableRequestHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -72,7 +72,7 @@ public class ConcurrencyTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<TestRequest, int, TestRequestHandler>();
+            .AddSingletonHandler<TestRequest, int, TestRequestHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -89,7 +89,7 @@ public class ConcurrencyTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<SyncRequest, string, SyncRequestHandler>();
+            .AddSingletonHandler<SyncRequest, string, SyncRequestHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();

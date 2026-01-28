@@ -35,7 +35,7 @@ public class PipelineBenchmarks
         simpleServices.AddLogging();
         simpleServices
             .AddMediator()
-            .AddHandler<ValidatedQueryHandler>()
+            .AddSingletonHandler<ValidatedQueryHandler>()
             .AddValidator<ValidatedQueryValidator>()
             .AddDefaultLoggingPipeline();
 

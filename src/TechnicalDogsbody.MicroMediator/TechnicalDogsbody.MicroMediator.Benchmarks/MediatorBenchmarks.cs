@@ -28,7 +28,7 @@ public class MediatorBenchmarks
         var simpleServices = new ServiceCollection();
         simpleServices
             .AddMediator()
-            .AddHandler<SimpleQueryHandler>();
+            .AddSingletonHandler<SimpleQueryHandler>();
         _simpleMediatorProvider = simpleServices.BuildServiceProvider();
         _simpleMediator = _simpleMediatorProvider.GetRequiredService<IMediator>();
 

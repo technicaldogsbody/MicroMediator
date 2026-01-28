@@ -35,8 +35,8 @@ public class MemoryLeakBenchmarks
         // Setup MicroMediator - no logging to match basic benchmarks
         var microServices = new ServiceCollection();
         microServices.AddMediator()
-            .AddHandler<LeakTestQuery, int, LeakTestQueryHandler>()
-            .AddHandler<LeakTestCommand, bool, LeakTestCommandHandler>();
+            .AddSingletonHandler<LeakTestQuery, int, LeakTestQueryHandler>()
+            .AddSingletonHandler<LeakTestCommand, bool, LeakTestCommandHandler>();
 
         _microProvider = microServices.BuildServiceProvider();
         _microMediator = _microProvider.GetRequiredService<IMediator>();

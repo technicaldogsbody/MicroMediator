@@ -10,7 +10,7 @@ public class CacheProviderIntegrationTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<UniqueCacheableRequest, string, UniqueCacheableRequestHandler>()
+            .AddSingletonHandler<UniqueCacheableRequest, string, UniqueCacheableRequestHandler>()
             .AddCachingPipeline<TrackingCacheProvider>();
 
         var provider = services.BuildServiceProvider();
@@ -49,7 +49,7 @@ public class CacheProviderIntegrationTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<CacheableRequest, string, CacheableRequestHandler>()
+            .AddSingletonHandler<CacheableRequest, string, CacheableRequestHandler>()
             .AddDefaultCachingPipeline();
 
         var provider = services.BuildServiceProvider();
@@ -69,12 +69,12 @@ public class CacheProviderIntegrationTests
     {
         var services1 = new ServiceCollection();
         services1.AddMediator()
-            .AddHandler<CacheableRequest, string, CacheableRequestHandler>()
+            .AddSingletonHandler<CacheableRequest, string, CacheableRequestHandler>()
             .AddCachingPipeline<TrackingCacheProvider>();
 
         var services2 = new ServiceCollection();
         services2.AddMediator()
-            .AddHandler<CacheableRequest, string, CacheableRequestHandler>()
+            .AddSingletonHandler<CacheableRequest, string, CacheableRequestHandler>()
             .AddDefaultCachingPipeline();
 
         var provider1 = services1.BuildServiceProvider();

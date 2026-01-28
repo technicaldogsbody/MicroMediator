@@ -28,8 +28,8 @@ public class CancellationBenchmarks
         // Setup MicroMediator
         var microServices = new ServiceCollection();
         microServices.AddMediator()
-            .AddHandler<LongRunningQuery, int, LongRunningQueryHandler>()
-            .AddHandler<QuickQuery, int, QuickQueryHandler>();
+            .AddSingletonHandler<LongRunningQuery, int, LongRunningQueryHandler>()
+            .AddSingletonHandler<QuickQuery, int, QuickQueryHandler>();
 
         var microProvider = microServices.BuildServiceProvider();
         _microMediator = microProvider.GetRequiredService<IMediator>();

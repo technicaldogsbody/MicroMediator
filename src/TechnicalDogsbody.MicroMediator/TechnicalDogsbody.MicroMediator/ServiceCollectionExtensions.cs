@@ -41,13 +41,51 @@ public sealed class MediatorBuilder
     }
 
     /// <summary>
-    /// Registers a request handler by handler type.
+    /// Registers a request handler as singleton (default for maximum performance).
     /// Automatically discovers TRequest and TResponse from the handler's implemented interface.
     /// Uses minimal reflection at startup only.
     /// </summary>
     /// <typeparam name="THandler">The handler implementation type.</typeparam>
     /// <returns>The builder for chaining.</returns>
+    /// <remarks>
+    /// IMPORTANT: Singleton handlers are cached and reused. Only use for handlers with no dependencies
+    /// or only singleton dependencies. For handlers with scoped dependencies (DbContext, HttpContext),
+    /// use AddScopedHandler instead.
+    /// </remarks>
+    [Obsolete("Use AddSingletonHandler, AddScopedHandler, or AddTransientHandler to explicitly specify handler lifetime.", false)]
     public MediatorBuilder AddHandler<THandler>()
+        where THandler : class => AddHandlerWithLifetime<THandler>(ServiceLifetime.Singleton);
+
+    /// <summary>
+    /// Registers a request handler as transient.
+    /// Transient handlers are resolved per-request with no caching.
+    /// </summary>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddTransientHandler<THandler>()
+        where THandler : class => AddHandlerWithLifetime<THandler>(ServiceLifetime.Transient);
+
+    /// <summary>
+    /// Registers a request handler as scoped.
+    /// Scoped handlers are resolved per-request from the scoped service provider.
+    /// Use for handlers with scoped dependencies (DbContext, HttpContext, etc.)
+    /// </summary>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddScopedHandler<THandler>()
+        where THandler : class => AddHandlerWithLifetime<THandler>(ServiceLifetime.Scoped);
+
+    /// <summary>
+    /// Registers a request handler as singleton.
+    /// Singleton handlers are cached and reused for maximum performance.
+    /// Only use for handlers with no dependencies or only singleton dependencies.
+    /// </summary>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddSingletonHandler<THandler>()
+        where THandler : class => AddHandlerWithLifetime<THandler>(ServiceLifetime.Singleton);
+
+    private MediatorBuilder AddHandlerWithLifetime<THandler>(ServiceLifetime lifetime)
         where THandler : class
     {
         var handlerType = typeof(THandler);
@@ -68,23 +106,82 @@ public sealed class MediatorBuilder
                 $"Use the explicit AddHandler<TRequest, TResponse, THandler>() overload to specify which interface to register.");
         }
 
-        _services.AddTransient(handlerInterfaces[0], handlerType);
+        var handlerInterface = handlerInterfaces[0];
+        _services.Add(new ServiceDescriptor(handlerInterface, handlerType, lifetime));
+        HandlerLifetimeTracker.RegisterHandler(handlerInterface, lifetime);
         return this;
     }
 
     /// <summary>
-    /// Registers a request handler explicitly with all type parameters.
+    /// Registers a request handler explicitly as singleton (default for maximum performance).
     /// Zero reflection.
     /// </summary>
     /// <typeparam name="TRequest">The request type.</typeparam>
     /// <typeparam name="TResponse">The response type.</typeparam>
     /// <typeparam name="THandler">The handler implementation type.</typeparam>
     /// <returns>The builder for chaining.</returns>
+    /// <remarks>
+    /// IMPORTANT: Singleton handlers are cached and reused. Only use for handlers with no dependencies
+    /// or only singleton dependencies. For handlers with scoped dependencies (DbContext, HttpContext),
+    /// use AddScopedHandler instead.
+    /// </remarks>
+    [Obsolete("Use AddSingletonHandler, AddScopedHandler, or AddTransientHandler to explicitly specify handler lifetime.")]
     public MediatorBuilder AddHandler<TRequest, TResponse, THandler>()
         where TRequest : IRequest<TResponse>
         where THandler : class, IRequestHandler<TRequest, TResponse>
     {
+        _services.AddSingleton<IRequestHandler<TRequest, TResponse>, THandler>();
+        HandlerLifetimeTracker.RegisterHandler(typeof(IRequestHandler<TRequest, TResponse>), ServiceLifetime.Singleton);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a request handler explicitly as transient.
+    /// Zero reflection.
+    /// </summary>
+    /// <typeparam name="TRequest">The request type.</typeparam>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddTransientHandler<TRequest, TResponse, THandler>()
+        where TRequest : IRequest<TResponse>
+        where THandler : class, IRequestHandler<TRequest, TResponse>
+    {
         _services.AddTransient<IRequestHandler<TRequest, TResponse>, THandler>();
+        HandlerLifetimeTracker.RegisterHandler(typeof(IRequestHandler<TRequest, TResponse>), ServiceLifetime.Transient);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a request handler explicitly as scoped.
+    /// Zero reflection.
+    /// </summary>
+    /// <typeparam name="TRequest">The request type.</typeparam>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddScopedHandler<TRequest, TResponse, THandler>()
+        where TRequest : IRequest<TResponse>
+        where THandler : class, IRequestHandler<TRequest, TResponse>
+    {
+        _services.AddScoped<IRequestHandler<TRequest, TResponse>, THandler>();
+        HandlerLifetimeTracker.RegisterHandler(typeof(IRequestHandler<TRequest, TResponse>), ServiceLifetime.Scoped);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a request handler explicitly as singleton.
+    /// Zero reflection.
+    /// </summary>
+    /// <typeparam name="TRequest">The request type.</typeparam>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddSingletonHandler<TRequest, TResponse, THandler>()
+        where TRequest : IRequest<TResponse>
+        where THandler : class, IRequestHandler<TRequest, TResponse>
+    {
+        _services.AddSingleton<IRequestHandler<TRequest, TResponse>, THandler>();
         return this;
     }
 
@@ -202,13 +299,47 @@ public sealed class MediatorBuilder
     }
 
     /// <summary>
-    /// Registers a streaming request handler by handler type.
+    /// Registers a streaming request handler as singleton (default for maximum performance).
     /// Automatically discovers TRequest and TResponse from the handler's implemented interface.
     /// Uses minimal reflection at startup only.
     /// </summary>
     /// <typeparam name="THandler">The streaming handler implementation type.</typeparam>
     /// <returns>The builder for chaining.</returns>
+    /// <remarks>
+    /// IMPORTANT: Singleton handlers are cached and reused. Only use for handlers with no dependencies
+    /// or only singleton dependencies. For handlers with scoped dependencies, use AddScopedStreamHandler.
+    /// </remarks>
+    [Obsolete("Use AddSingletonStreamHandler, AddScopedStreamHandler, or AddTransientStreamHandler to explicitly specify handler lifetime.")]
     public MediatorBuilder AddStreamHandler<THandler>()
+        where THandler : class => AddStreamHandlerWithLifetime<THandler>(ServiceLifetime.Singleton);
+
+    /// <summary>
+    /// Registers a streaming request handler as transient.
+    /// </summary>
+    /// <typeparam name="THandler">The streaming handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddTransientStreamHandler<THandler>()
+        where THandler : class => AddStreamHandlerWithLifetime<THandler>(ServiceLifetime.Transient);
+
+    /// <summary>
+    /// Registers a streaming request handler as scoped.
+    /// Use for handlers with scoped dependencies.
+    /// </summary>
+    /// <typeparam name="THandler">The streaming handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddScopedStreamHandler<THandler>()
+        where THandler : class => AddStreamHandlerWithLifetime<THandler>(ServiceLifetime.Scoped);
+
+    /// <summary>
+    /// Registers a streaming request handler as singleton.
+    /// Use for handlers with no dependencies or only singleton dependencies.
+    /// </summary>
+    /// <typeparam name="THandler">The streaming handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddSingletonStreamHandler<THandler>()
+        where THandler : class => AddStreamHandlerWithLifetime<THandler>(ServiceLifetime.Singleton);
+
+    private MediatorBuilder AddStreamHandlerWithLifetime<THandler>(ServiceLifetime lifetime)
         where THandler : class
     {
         var handlerType = typeof(THandler);
@@ -229,23 +360,81 @@ public sealed class MediatorBuilder
                 $"Use the explicit AddStreamHandler<TRequest, TResponse, THandler>() overload to specify which interface to register.");
         }
 
-        _services.AddTransient(handlerInterfaces[0], handlerType);
+        var handlerInterface = handlerInterfaces[0];
+        _services.Add(new ServiceDescriptor(handlerInterface, handlerType, lifetime));
+        HandlerLifetimeTracker.RegisterHandler(handlerInterface, lifetime);
         return this;
     }
 
     /// <summary>
-    /// Registers a streaming request handler explicitly with all type parameters.
+    /// Registers a streaming request handler explicitly as singleton (default for maximum performance).
     /// Zero reflection.
     /// </summary>
     /// <typeparam name="TRequest">The streaming request type.</typeparam>
     /// <typeparam name="TResponse">The response item type.</typeparam>
     /// <typeparam name="THandler">The handler implementation type.</typeparam>
     /// <returns>The builder for chaining.</returns>
+    /// <remarks>
+    /// IMPORTANT: Singleton handlers are cached and reused. Only use for handlers with no dependencies
+    /// or only singleton dependencies. For handlers with scoped dependencies, use AddScopedStreamHandler.
+    /// </remarks>
+    [Obsolete("Use AddSingletonStreamHandler, AddScopedStreamHandler, or AddTransientStreamHandler to explicitly specify handler lifetime.")]
     public MediatorBuilder AddStreamHandler<TRequest, TResponse, THandler>()
         where TRequest : IStreamRequest<TResponse>
         where THandler : class, IStreamRequestHandler<TRequest, TResponse>
     {
+        _services.AddSingleton<IStreamRequestHandler<TRequest, TResponse>, THandler>();
+        HandlerLifetimeTracker.RegisterHandler(typeof(IStreamRequestHandler<TRequest, TResponse>), ServiceLifetime.Singleton);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a streaming request handler explicitly as transient.
+    /// Zero reflection.
+    /// </summary>
+    /// <typeparam name="TRequest">The streaming request type.</typeparam>
+    /// <typeparam name="TResponse">The response item type.</typeparam>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddTransientStreamHandler<TRequest, TResponse, THandler>()
+        where TRequest : IStreamRequest<TResponse>
+        where THandler : class, IStreamRequestHandler<TRequest, TResponse>
+    {
         _services.AddTransient<IStreamRequestHandler<TRequest, TResponse>, THandler>();
+        HandlerLifetimeTracker.RegisterHandler(typeof(IStreamRequestHandler<TRequest, TResponse>), ServiceLifetime.Transient);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a streaming request handler explicitly as scoped.
+    /// Zero reflection.
+    /// </summary>
+    /// <typeparam name="TRequest">The streaming request type.</typeparam>
+    /// <typeparam name="TResponse">The response item type.</typeparam>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddScopedStreamHandler<TRequest, TResponse, THandler>()
+        where TRequest : IStreamRequest<TResponse>
+        where THandler : class, IStreamRequestHandler<TRequest, TResponse>
+    {
+        _services.AddScoped<IStreamRequestHandler<TRequest, TResponse>, THandler>();
+        HandlerLifetimeTracker.RegisterHandler(typeof(IStreamRequestHandler<TRequest, TResponse>), ServiceLifetime.Scoped);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a streaming request handler explicitly as singleton.
+    /// Zero reflection.
+    /// </summary>
+    /// <typeparam name="TRequest">The streaming request type.</typeparam>
+    /// <typeparam name="TResponse">The response item type.</typeparam>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    /// <returns>The builder for chaining.</returns>
+    public MediatorBuilder AddSingletonStreamHandler<TRequest, TResponse, THandler>()
+        where TRequest : IStreamRequest<TResponse>
+        where THandler : class, IStreamRequestHandler<TRequest, TResponse>
+    {
+        _services.AddSingleton<IStreamRequestHandler<TRequest, TResponse>, THandler>();
         return this;
     }
 

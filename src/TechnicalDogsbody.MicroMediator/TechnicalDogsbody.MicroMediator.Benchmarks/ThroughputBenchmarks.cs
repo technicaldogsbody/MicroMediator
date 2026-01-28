@@ -32,7 +32,7 @@ public class ThroughputBenchmarks
         var simpleServices = new ServiceCollection();
         simpleServices
             .AddMediator()
-            .AddHandler<ThroughputQuery, int, ThroughputQueryHandler>();
+            .AddSingletonHandler<ThroughputQuery, int, ThroughputQueryHandler>();
         _simpleMediatorProvider = simpleServices.BuildServiceProvider();
         _simpleMediator = _simpleMediatorProvider.GetRequiredService<IMediator>();
 

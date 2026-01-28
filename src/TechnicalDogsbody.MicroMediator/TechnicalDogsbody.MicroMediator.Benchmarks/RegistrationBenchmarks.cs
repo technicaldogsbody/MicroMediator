@@ -29,7 +29,7 @@ public class RegistrationBenchmarks
         var explicitServices = new ServiceCollection();
         explicitServices
             .AddMediator()
-            .AddHandler<RegistrationQuery, int, RegistrationQueryHandler>()
+            .AddSingletonHandler<RegistrationQuery, int, RegistrationQueryHandler>()
             .AddValidator<RegistrationQuery, RegistrationQueryValidator>();
         _explicitProvider = explicitServices.BuildServiceProvider();
         _explicitMediator = _explicitProvider.GetRequiredService<IMediator>();
@@ -38,7 +38,7 @@ public class RegistrationBenchmarks
         var reflectionServices = new ServiceCollection();
         reflectionServices
             .AddMediator()
-            .AddHandler<RegistrationQueryHandler>()
+            .AddSingletonHandler<RegistrationQueryHandler>()
             .AddValidator<RegistrationQueryValidator>();
         _reflectionProvider = reflectionServices.BuildServiceProvider();
         _reflectionMediator = _reflectionProvider.GetRequiredService<IMediator>();
@@ -64,7 +64,7 @@ public class RegistrationBenchmarks
         var services = new ServiceCollection();
         services
             .AddMediator()
-            .AddHandler<RegistrationQuery, int, RegistrationQueryHandler>()
+            .AddSingletonHandler<RegistrationQuery, int, RegistrationQueryHandler>()
             .AddValidator<RegistrationQuery, RegistrationQueryValidator>();
 
         using var provider = services.BuildServiceProvider();
@@ -80,7 +80,7 @@ public class RegistrationBenchmarks
         var services = new ServiceCollection();
         services
             .AddMediator()
-            .AddHandler<RegistrationQueryHandler>()
+            .AddSingletonHandler<RegistrationQueryHandler>()
             .AddValidator<RegistrationQueryValidator>();
 
         using var provider = services.BuildServiceProvider();

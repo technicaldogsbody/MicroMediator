@@ -34,7 +34,7 @@ public class ExceptionHandlingBenchmarks
         // Setup MicroMediator WITHOUT logging to match MediatR
         var microServices = new ServiceCollection();
         microServices.AddMediator()
-            .AddHandler<FlakyQuery, int, FlakyQueryHandler>();
+            .AddSingletonHandler<FlakyQuery, int, FlakyQueryHandler>();
         
         // Ensure logging is available but not used
         microServices.AddLogging();

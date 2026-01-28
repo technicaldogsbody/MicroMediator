@@ -12,7 +12,7 @@ public class PipelineBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<SimpleRequest, string, SimpleRequestHandler>();
+            .AddSingletonHandler<SimpleRequest, string, SimpleRequestHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -27,7 +27,7 @@ public class PipelineBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<TestBehaviorRequest, string, TestBehaviorRequestHandler>()
+            .AddSingletonHandler<TestBehaviorRequest, string, TestBehaviorRequestHandler>()
             .AddBehavior(typeof(TestBehavior<,>));
 
         var provider = services.BuildServiceProvider();
@@ -43,7 +43,7 @@ public class PipelineBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<MultiBehaviorRequest, string, MultiBehaviorRequestHandler>()
+            .AddSingletonHandler<MultiBehaviorRequest, string, MultiBehaviorRequestHandler>()
             .AddBehavior(typeof(FirstBehavior<,>))
             .AddBehavior(typeof(SecondBehavior<,>));
 
@@ -61,7 +61,7 @@ public class PipelineBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<ExceptionRequest, string, ExceptionRequestHandler>()
+            .AddSingletonHandler<ExceptionRequest, string, ExceptionRequestHandler>()
             .AddBehavior(typeof(ExceptionBehavior<,>));
 
         var provider = services.BuildServiceProvider();
@@ -76,7 +76,7 @@ public class PipelineBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<ShortCircuitRequest, string, ShortCircuitRequestHandler>()
+            .AddSingletonHandler<ShortCircuitRequest, string, ShortCircuitRequestHandler>()
             .AddBehavior(typeof(ShortCircuitBehavior<,>));
 
         var provider = services.BuildServiceProvider();

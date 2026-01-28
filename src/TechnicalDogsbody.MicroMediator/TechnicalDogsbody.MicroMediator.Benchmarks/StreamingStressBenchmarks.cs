@@ -32,7 +32,7 @@ public class StreamingStressBenchmarks
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddStreamHandler<MassiveStreamQuery, int, MassiveStreamHandler>();
+            .AddSingletonStreamHandler<MassiveStreamQuery, int, MassiveStreamHandler>();
 
         var provider = services.BuildServiceProvider();
         _mediator = provider.GetRequiredService<IMediator>();

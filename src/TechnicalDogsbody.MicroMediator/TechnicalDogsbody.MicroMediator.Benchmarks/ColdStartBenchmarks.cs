@@ -24,7 +24,7 @@ public class ColdStartBenchmarks
         var services = new ServiceCollection();
         services
             .AddMediator()
-            .AddHandler<ColdStartQuery, int, ColdStartQueryHandler>();
+            .AddSingletonHandler<ColdStartQuery, int, ColdStartQueryHandler>();
 
         using var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();

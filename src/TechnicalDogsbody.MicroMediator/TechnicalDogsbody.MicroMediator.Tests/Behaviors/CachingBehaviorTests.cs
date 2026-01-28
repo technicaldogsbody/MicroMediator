@@ -12,7 +12,7 @@ public class CachingBehaviorTests
         var services = new ServiceCollection();
         services.AddMemoryCache();
         services.AddMediator()
-            .AddHandler<NonCacheableRequest, string, NonCacheableRequestHandler>()
+            .AddSingletonHandler<NonCacheableRequest, string, NonCacheableRequestHandler>()
             .AddDefaultCachingPipeline();
 
         var provider = services.BuildServiceProvider();
@@ -29,7 +29,7 @@ public class CachingBehaviorTests
         var services = new ServiceCollection();
         services.AddMemoryCache();
         services.AddMediator()
-            .AddHandler<CacheableRequest, string, CacheableRequestHandler>()
+            .AddSingletonHandler<CacheableRequest, string, CacheableRequestHandler>()
             .AddDefaultCachingPipeline();
 
         var provider = services.BuildServiceProvider();
@@ -49,7 +49,7 @@ public class CachingBehaviorTests
         var services = new ServiceCollection();
         services.AddMemoryCache();
         services.AddMediator()
-            .AddHandler<CacheableRequest, string, CacheableRequestHandler>()
+            .AddSingletonHandler<CacheableRequest, string, CacheableRequestHandler>()
             .AddDefaultCachingPipeline();
 
         var provider = services.BuildServiceProvider();
@@ -69,7 +69,7 @@ public class CachingBehaviorTests
         var services = new ServiceCollection();
         services.AddMemoryCache();
         services.AddMediator()
-            .AddHandler<CacheableRequest, string, CacheableRequestHandler>()
+            .AddSingletonHandler<CacheableRequest, string, CacheableRequestHandler>()
             .AddDefaultCachingPipeline();
 
         var provider = services.BuildServiceProvider();
@@ -88,7 +88,7 @@ public class CachingBehaviorTests
         var services = new ServiceCollection();
         services.AddMemoryCache();
         services.AddMediator()
-            .AddHandler<CustomDurationRequest, string, CustomDurationRequestHandler>()
+            .AddSingletonHandler<CustomDurationRequest, string, CustomDurationRequestHandler>()
             .AddDefaultCachingPipeline();
 
         var provider = services.BuildServiceProvider();

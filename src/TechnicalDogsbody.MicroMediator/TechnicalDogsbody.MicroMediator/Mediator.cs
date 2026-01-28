@@ -98,15 +98,15 @@ file abstract class RequestHandlerWrapper<TResponse>
 
 /// <summary>
 /// Concrete wrapper implementation that handles the request with its handler and pipeline.
-/// Caches handler and behavior resolution for maximum performance.
+/// Caches singleton handlers, resolves scoped/transient handlers per-request.
 /// </summary>
 /// <typeparam name="TRequest">Request type.</typeparam>
 /// <typeparam name="TResponse">Response type.</typeparam>
 file sealed class RequestHandlerWrapperImpl<TRequest, TResponse> : RequestHandlerWrapper<TResponse>
     where TRequest : IRequest<TResponse>
 {
-    // Cache per service provider to handle different DI scopes correctly
-    private readonly ConcurrentDictionary<IServiceProvider, (IRequestHandler<TRequest, TResponse> Handler, IPipelineBehavior<TRequest, TResponse>[] Behaviors)> _providerCache = new();
+    // Cache handler and behaviors when they're singleton
+    private readonly ConcurrentDictionary<IServiceProvider, CachedHandlerInfo?> _cache = new();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override ValueTask<TResponse> HandleAsync(
@@ -117,29 +117,147 @@ file sealed class RequestHandlerWrapperImpl<TRequest, TResponse> : RequestHandle
         // Cast once at the wrapper level (type-safe due to generic constraints)
         var typedRequest = (TRequest)request;
 
-        // Get or create cached handler and behaviors for this service provider
-        var (handler, behaviors) = _providerCache.GetOrAdd(provider, static p =>
+        // Try to get cached handler info
+        var cachedInfo = _cache.GetOrAdd(provider, p =>
         {
-            var h = p.GetService<IRequestHandler<TRequest, TResponse>>()
-                ?? throw new InvalidOperationException(
-                    $"No handler registered for request type '{typeof(TRequest).Name}'. " +
-                    $"Register an implementation of IRequestHandler<{typeof(TRequest).Name}, {typeof(TResponse).Name}>.");
+            // Check handler lifetime
+            var handlerType = typeof(IRequestHandler<TRequest, TResponse>);
+            var lifetime = HandlerLifetimeTracker.GetLifetime(handlerType);
 
-            // Get behaviors in reverse order (execution order is reverse of registration)
-            var behaviorList = p.GetServices<IPipelineBehavior<TRequest, TResponse>>().ToArray();
-            Array.Reverse(behaviorList);
+            if (lifetime == null)
+            {
+                // Handler not registered through MicroMediator, try to resolve
+                var handler = p.GetService<IRequestHandler<TRequest, TResponse>>();
+                return handler == null
+                    ? throw new InvalidOperationException(
+                        $"No handler registered for request type '{typeof(TRequest).Name}'. " +
+                        $"Register an implementation of IRequestHandler<{typeof(TRequest).Name}, {typeof(TResponse).Name}>.")
+                    :
+                    // Treat as transient (safe default)
+                    null;
+            }
 
-            return (h, behaviorList);
+            // Only cache singleton handlers
+            if (lifetime == ServiceLifetime.Singleton)
+            {
+                var handler = p.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
+                var behaviors = p.GetServices<IPipelineBehavior<TRequest, TResponse>>().ToArray();
+                Array.Reverse(behaviors);
+                return new CachedHandlerInfo(handler, behaviors, true);
+            }
+
+            // Don't cache transient/scoped handlers (return null to signal per-request resolution)
+            return null;
         });
+
+        // If we have cached singleton handler, use it
+        if (cachedInfo != null)
+        {
+            return ExecuteWithCachedHandler(typedRequest, cachedInfo, cancellationToken);
+        }
+
+        // Resolve transient/scoped handler per-request
+        return ExecuteWithResolvedHandler(typedRequest, provider, cancellationToken);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ValueTask<TResponse> ExecuteWithCachedHandler(
+        TRequest request,
+        CachedHandlerInfo cachedInfo,
+        CancellationToken cancellationToken)
+    {
+        var handler = cachedInfo.Handler;
+        var behaviors = cachedInfo.Behaviors;
 
         // Fast path: no behaviors, call handler directly
         if (behaviors.Length == 0)
         {
-            return handler.HandleAsync(typedRequest, cancellationToken);
+            return handler.HandleAsync(request, cancellationToken);
         }
 
-        // Build pipeline inline (minimize allocations)
-        return ExecutePipeline(typedRequest, handler, behaviors, cancellationToken);
+        return ExecutePipeline(request, handler, behaviors, cancellationToken);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ValueTask<TResponse> ExecuteWithResolvedHandler(
+        TRequest request,
+        IServiceProvider provider,
+        CancellationToken cancellationToken)
+    {
+        // Check if this is a scoped handler
+        var handlerType = typeof(IRequestHandler<TRequest, TResponse>);
+        var lifetime = HandlerLifetimeTracker.GetLifetime(handlerType);
+
+        // Scoped handlers need to be resolved from a scoped provider
+        if (lifetime == ServiceLifetime.Scoped)
+        {
+            return ExecuteWithScopedHandler(request, provider, cancellationToken);
+        }
+
+        // Transient handlers can be resolved directly
+        var handler = provider.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
+        var behaviors = provider.GetServices<IPipelineBehavior<TRequest, TResponse>>().ToArray();
+        Array.Reverse(behaviors);
+
+        // Fast path: no behaviors, call handler directly
+        if (behaviors.Length == 0)
+        {
+            return handler.HandleAsync(request, cancellationToken);
+        }
+
+        return ExecutePipeline(request, handler, behaviors, cancellationToken);
+    }
+
+    private static ValueTask<TResponse> ExecuteWithScopedHandler(
+        TRequest request,
+        IServiceProvider provider,
+        CancellationToken cancellationToken)
+    {
+        // Try to resolve directly first (works if provider is already scoped, e.g., in ASP.NET Core)
+        try
+        {
+            var handler = provider.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
+            var behaviors = provider.GetServices<IPipelineBehavior<TRequest, TResponse>>().ToArray();
+            Array.Reverse(behaviors);
+
+            if (behaviors.Length == 0)
+            {
+                return handler.HandleAsync(request, cancellationToken);
+            }
+
+            return ExecutePipeline(request, handler, behaviors, cancellationToken);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Cannot resolve scoped service"))
+        {
+            // Root provider detected, create scope and dispose after completion
+            var scope = provider.CreateScope();
+            var scopedProvider = scope.ServiceProvider;
+
+            var handler = scopedProvider.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
+            var behaviors = scopedProvider.GetServices<IPipelineBehavior<TRequest, TResponse>>().ToArray();
+            Array.Reverse(behaviors);
+
+            if (behaviors.Length == 0)
+            {
+                return DisposeAfterAsync(handler.HandleAsync(request, cancellationToken), scope);
+            }
+
+            return DisposeAfterAsync(ExecutePipeline(request, handler, behaviors, cancellationToken), scope);
+        }
+    }
+
+    private static async ValueTask<TResponse> DisposeAfterAsync(
+        ValueTask<TResponse> task,
+        IServiceScope scope)
+    {
+        try
+        {
+            return await task.ConfigureAwait(false);
+        }
+        finally
+        {
+            scope.Dispose();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -162,6 +280,16 @@ file sealed class RequestHandlerWrapperImpl<TRequest, TResponse> : RequestHandle
         }
 
         return handlerDelegate();
+    }
+
+    private sealed class CachedHandlerInfo(
+        IRequestHandler<TRequest, TResponse> handler,
+        IPipelineBehavior<TRequest, TResponse>[] behaviors,
+        bool isCached)
+    {
+        public IRequestHandler<TRequest, TResponse> Handler { get; } = handler;
+        public IPipelineBehavior<TRequest, TResponse>[] Behaviors { get; } = behaviors;
+        public bool IsCached { get; } = isCached;
     }
 }
 
@@ -209,15 +337,15 @@ file abstract class StreamRequestHandlerWrapper<TResponse>
 
 /// <summary>
 /// Concrete wrapper implementation that handles the streaming request with its handler and pipeline.
-/// Caches handler and behavior resolution for maximum performance.
+/// Caches singleton handlers, resolves scoped/transient handlers per-request.
 /// </summary>
 /// <typeparam name="TRequest">Streaming request type.</typeparam>
 /// <typeparam name="TResponse">Response item type.</typeparam>
 file sealed class StreamRequestHandlerWrapperImpl<TRequest, TResponse> : StreamRequestHandlerWrapper<TResponse>
     where TRequest : IStreamRequest<TResponse>
 {
-    // Cache per service provider to handle different DI scopes correctly
-    private readonly ConcurrentDictionary<IServiceProvider, (IStreamRequestHandler<TRequest, TResponse> Handler, IStreamPipelineBehavior<TRequest, TResponse>[] Behaviors)> _providerCache = new();
+    // Cache handler and behaviors when they're singleton
+    private readonly ConcurrentDictionary<IServiceProvider, CachedHandlerInfo?> _cache = new();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override IAsyncEnumerable<TResponse> HandleAsync(
@@ -237,38 +365,155 @@ file sealed class StreamRequestHandlerWrapperImpl<TRequest, TResponse> : StreamR
         IServiceProvider provider,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        // Resolve handler and behaviors lazily (on first enumeration)
-        var (handler, behaviors) = _providerCache.GetOrAdd(provider, static p =>
+        // Try to get cached handler info
+        var cachedInfo = _cache.GetOrAdd(provider, p =>
         {
-            var h = p.GetService<IStreamRequestHandler<TRequest, TResponse>>()
-                ?? throw new InvalidOperationException(
-                    $"No handler registered for streaming request type '{typeof(TRequest).Name}'. " +
-                    $"Register an implementation of IStreamRequestHandler<{typeof(TRequest).Name}, {typeof(TResponse).Name}>.");
+            // Check handler lifetime
+            var handlerType = typeof(IStreamRequestHandler<TRequest, TResponse>);
+            var lifetime = HandlerLifetimeTracker.GetLifetime(handlerType);
 
-            // Get behaviors in reverse order (execution order is reverse of registration)
-            var behaviorList = p.GetServices<IStreamPipelineBehavior<TRequest, TResponse>>().ToArray();
-            Array.Reverse(behaviorList);
+            if (lifetime == null)
+            {
+                // Handler not registered through MicroMediator, try to resolve
+                var handler = p.GetService<IStreamRequestHandler<TRequest, TResponse>>();
+                return handler == null
+                    ? throw new InvalidOperationException(
+                        $"No handler registered for streaming request type '{typeof(TRequest).Name}'. " +
+                        $"Register an implementation of IStreamRequestHandler<{typeof(TRequest).Name}, {typeof(TResponse).Name}>.")
+                    :
+                    // Treat as transient (safe default)
+                    null;
+            }
 
-            return (h, behaviorList);
+            // Only cache singleton handlers
+            if (lifetime == ServiceLifetime.Singleton)
+            {
+                var handler = p.GetRequiredService<IStreamRequestHandler<TRequest, TResponse>>();
+                var behaviors = p.GetServices<IStreamPipelineBehavior<TRequest, TResponse>>().ToArray();
+                Array.Reverse(behaviors);
+                return new CachedHandlerInfo(handler, behaviors, true);
+            }
+
+            // Don't cache transient/scoped handlers
+            return null;
         });
 
-        // Execute the pipeline and yield results
         IAsyncEnumerable<TResponse> stream;
-        
-        // Fast path: no behaviors, call handler directly
-        if (behaviors.Length == 0)
+
+        if (cachedInfo != null)
         {
-            stream = handler.HandleAsync(request, cancellationToken);
+            // Use cached singleton handler
+            var handler = cachedInfo.Handler;
+            var behaviors = cachedInfo.Behaviors;
+
+            if (behaviors.Length == 0)
+            {
+                stream = handler.HandleAsync(request, cancellationToken);
+            }
+            else
+            {
+                stream = ExecutePipeline(request, handler, behaviors, cancellationToken);
+            }
+
+            await foreach (var item in stream.WithCancellation(cancellationToken))
+            {
+                yield return item;
+            }
         }
         else
         {
-            // Build pipeline inline
-            stream = ExecutePipeline(request, handler, behaviors, cancellationToken);
+            // Check if this is a scoped handler
+            var handlerType = typeof(IStreamRequestHandler<TRequest, TResponse>);
+            var lifetime = HandlerLifetimeTracker.GetLifetime(handlerType);
+
+            if (lifetime == ServiceLifetime.Scoped)
+            {
+                // Handle scoped resolution
+                await foreach (var item in ExecuteWithScopedStreamHandler(request, provider, cancellationToken))
+                {
+                    yield return item;
+                }
+            }
+            else
+            {
+                // Transient handlers can be resolved directly
+                var handler = provider.GetRequiredService<IStreamRequestHandler<TRequest, TResponse>>();
+                var behaviors = provider.GetServices<IStreamPipelineBehavior<TRequest, TResponse>>().ToArray();
+                Array.Reverse(behaviors);
+
+                if (behaviors.Length == 0)
+                {
+                    stream = handler.HandleAsync(request, cancellationToken);
+                }
+                else
+                {
+                    stream = ExecutePipeline(request, handler, behaviors, cancellationToken);
+                }
+
+                await foreach (var item in stream.WithCancellation(cancellationToken))
+                {
+                    yield return item;
+                }
+            }
+        }
+    }
+
+    private static async IAsyncEnumerable<TResponse> ExecuteWithScopedStreamHandler(
+        TRequest request,
+        IServiceProvider provider,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        IServiceScope? scope = null;
+        var scopedProvider = provider;
+        IAsyncEnumerable<TResponse> stream;
+
+        // Try to resolve directly first (works if provider is already scoped)
+        try
+        {
+            var handler = scopedProvider.GetRequiredService<IStreamRequestHandler<TRequest, TResponse>>();
+            var behaviors = scopedProvider.GetServices<IStreamPipelineBehavior<TRequest, TResponse>>().ToArray();
+            Array.Reverse(behaviors);
+
+            if (behaviors.Length == 0)
+            {
+                stream = handler.HandleAsync(request, cancellationToken);
+            }
+            else
+            {
+                stream = ExecutePipeline(request, handler, behaviors, cancellationToken);
+            }
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Cannot resolve scoped service"))
+        {
+            // Root provider detected, create scope
+            scope = provider.CreateScope();
+            scopedProvider = scope.ServiceProvider;
+
+            var handler = scopedProvider.GetRequiredService<IStreamRequestHandler<TRequest, TResponse>>();
+            var behaviors = scopedProvider.GetServices<IStreamPipelineBehavior<TRequest, TResponse>>().ToArray();
+            Array.Reverse(behaviors);
+
+            if (behaviors.Length == 0)
+            {
+                stream = handler.HandleAsync(request, cancellationToken);
+            }
+            else
+            {
+                stream = ExecutePipeline(request, handler, behaviors, cancellationToken);
+            }
         }
 
-        await foreach (var item in stream.WithCancellation(cancellationToken))
+        // Enumerate outside of try-catch
+        try
         {
-            yield return item;
+            await foreach (var item in stream.WithCancellation(cancellationToken))
+            {
+                yield return item;
+            }
+        }
+        finally
+        {
+            scope?.Dispose();
         }
     }
 
@@ -292,5 +537,15 @@ file sealed class StreamRequestHandlerWrapperImpl<TRequest, TResponse> : StreamR
         }
 
         return handlerDelegate();
+    }
+
+    private sealed class CachedHandlerInfo(
+        IStreamRequestHandler<TRequest, TResponse> handler,
+        IStreamPipelineBehavior<TRequest, TResponse>[] behaviors,
+        bool isCached)
+    {
+        public IStreamRequestHandler<TRequest, TResponse> Handler { get; } = handler;
+        public IStreamPipelineBehavior<TRequest, TResponse>[] Behaviors { get; } = behaviors;
+        public bool IsCached { get; } = isCached;
     }
 }

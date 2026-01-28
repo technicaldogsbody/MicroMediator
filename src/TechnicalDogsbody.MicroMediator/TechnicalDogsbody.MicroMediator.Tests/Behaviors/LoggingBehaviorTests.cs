@@ -15,7 +15,7 @@ public class LoggingBehaviorTests
         var services = new ServiceCollection();
         services.AddSingleton<ILogger<TechnicalDogsbody.MicroMediator.Behaviors.LoggingBehavior<TestRequest, string>>>(logger);
         services.AddMediator()
-            .AddHandler<TestRequest, string, TestRequestHandler>()
+            .AddSingletonHandler<TestRequest, string, TestRequestHandler>()
             .AddDefaultLoggingPipeline();
 
         var provider = services.BuildServiceProvider();
@@ -36,7 +36,7 @@ public class LoggingBehaviorTests
         var services = new ServiceCollection();
         services.AddSingleton<ILogger<TechnicalDogsbody.MicroMediator.Behaviors.LoggingBehavior<ThrowingRequest, string>>>(logger);
         services.AddMediator()
-            .AddHandler<ThrowingRequest, string, ThrowingRequestHandler>()
+            .AddSingletonHandler<ThrowingRequest, string, ThrowingRequestHandler>()
             .AddDefaultLoggingPipeline();
 
         var provider = services.BuildServiceProvider();
@@ -57,7 +57,7 @@ public class LoggingBehaviorTests
         var services = new ServiceCollection();
         services.AddSingleton<ILogger<TechnicalDogsbody.MicroMediator.Behaviors.LoggingBehavior<SlowRequest, string>>>(logger);
         services.AddMediator()
-            .AddHandler<SlowRequest, string, SlowRequestHandler>()
+            .AddSingletonHandler<SlowRequest, string, SlowRequestHandler>()
             .AddDefaultLoggingPipeline();
 
         var provider = services.BuildServiceProvider();

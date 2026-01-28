@@ -14,7 +14,7 @@ public class ValidationBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<TestRequest, string, TestRequestHandler>();
+            .AddSingletonHandler<TestRequest, string, TestRequestHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -29,7 +29,7 @@ public class ValidationBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<TestRequest, string, TestRequestHandler>()
+            .AddSingletonHandler<TestRequest, string, TestRequestHandler>()
             .AddValidator<TestRequest, TestRequestValidator>();
 
         var provider = services.BuildServiceProvider();
@@ -45,7 +45,7 @@ public class ValidationBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<TestRequest, string, TestRequestHandler>()
+            .AddSingletonHandler<TestRequest, string, TestRequestHandler>()
             .AddValidator<TestRequest, TestRequestValidator>();
 
         var provider = services.BuildServiceProvider();
@@ -63,7 +63,7 @@ public class ValidationBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<TestRequest, string, TestRequestHandler>()
+            .AddSingletonHandler<TestRequest, string, TestRequestHandler>()
             .AddValidator<TestRequest, TestRequestValidator>()
             .AddValidator<TestRequest, SecondTestRequestValidator>();
 
@@ -122,7 +122,7 @@ public class ValidationBehaviorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<TestRequest, string, TestRequestHandler>()
+            .AddSingletonHandler<TestRequest, string, TestRequestHandler>()
             .AddValidator<TestRequest, CancellationTestValidator>();
 
         var provider = services.BuildServiceProvider();

@@ -11,7 +11,7 @@ public class StreamingTests
         // Arrange
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddStreamHandler<SimpleStreamQuery, int, SimpleStreamHandler>();
+            .AddSingletonStreamHandler<SimpleStreamQuery, int, SimpleStreamHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -32,7 +32,7 @@ public class StreamingTests
         // Arrange
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddStreamHandler<SimpleStreamQuery, int, SimpleStreamHandler>();
+            .AddSingletonStreamHandler<SimpleStreamQuery, int, SimpleStreamHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -65,7 +65,7 @@ public class StreamingTests
         // Arrange
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddStreamHandler<FilteredStreamQuery, int, FilteredStreamHandler>();
+            .AddSingletonStreamHandler<FilteredStreamQuery, int, FilteredStreamHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -90,7 +90,7 @@ public class StreamingTests
         // Arrange
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddStreamHandler<SimpleStreamQuery, int, SimpleStreamHandler>()
+            .AddSingletonStreamHandler<SimpleStreamQuery, int, SimpleStreamHandler>()
             .AddStreamBehavior(typeof(CountingStreamBehavior<,>));
 
         var provider = services.BuildServiceProvider();
@@ -144,7 +144,7 @@ public class StreamingTests
         // Arrange
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddStreamHandler<SimpleStreamQuery, int, SimpleStreamHandler>();
+            .AddSingletonStreamHandler<SimpleStreamQuery, int, SimpleStreamHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -168,7 +168,7 @@ public class StreamingTests
         // Arrange
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddStreamHandler<SimpleStreamQuery, int, SimpleStreamHandler>();
+            .AddSingletonStreamHandler<SimpleStreamQuery, int, SimpleStreamHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();

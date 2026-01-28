@@ -33,7 +33,7 @@ public class StreamingComparisonBenchmarks
         // Setup MicroMediator
         var microServices = new ServiceCollection();
         microServices.AddMediator()
-            .AddStreamHandler<MicroStreamQuery, int, MicroStreamHandler>();
+            .AddSingletonStreamHandler<MicroStreamQuery, int, MicroStreamHandler>();
 
         var microProvider = microServices.BuildServiceProvider();
         _microMediator = microProvider.GetRequiredService<IMediator>();

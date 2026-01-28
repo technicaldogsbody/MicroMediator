@@ -39,12 +39,12 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddHandler_GenericInference_RegistersHandler()
+    public void AddSingletonHandler_GenericInference_RegistersHandler()
     {
         var services = new ServiceCollection();
 
         services.AddMediator()
-            .AddHandler<TestHandler>();
+            .AddSingletonHandler<TestHandler>();
 
         var provider = services.BuildServiceProvider();
         var handler = provider.GetService<IRequestHandler<TestRequest, string>>();
@@ -53,12 +53,12 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddHandler_ExplicitTypes_RegistersHandler()
+    public void AddSingletonHandler_ExplicitTypes_RegistersHandler()
     {
         var services = new ServiceCollection();
 
         services.AddMediator()
-            .AddHandler<TestRequest, string, TestHandler>();
+            .AddSingletonHandler<TestRequest, string, TestHandler>();
 
         var provider = services.BuildServiceProvider();
         var handler = provider.GetService<IRequestHandler<TestRequest, string>>();
@@ -67,34 +67,34 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddHandler_NonHandler_ThrowsInvalidOperationException()
+    public void AddSingletonHandler_NonHandler_ThrowsInvalidOperationException()
     {
         var services = new ServiceCollection();
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
-            services.AddMediator().AddHandler<NotAHandler>());
+            services.AddMediator().AddSingletonHandler<NotAHandler>());
 
         Assert.Contains("must implement IRequestHandler", exception.Message);
     }
 
     [Fact]
-    public void AddHandler_MultipleInterfaces_ThrowsInvalidOperationException()
+    public void AddSingletonHandler_MultipleInterfaces_ThrowsInvalidOperationException()
     {
         var services = new ServiceCollection();
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
-            services.AddMediator().AddHandler<MultipleInterfaceHandler>());
+            services.AddMediator().AddSingletonHandler<MultipleInterfaceHandler>());
 
         Assert.Contains("implements multiple IRequestHandler interfaces", exception.Message);
     }
 
     [Fact]
-    public void AddHandler_WithNonGenericInterfaces_IgnoresThemAndRegistersCorrectly()
+    public void AddSingletonHandler_WithNonGenericInterfaces_IgnoresThemAndRegistersCorrectly()
     {
         var services = new ServiceCollection();
 
         services.AddMediator()
-            .AddHandler<HandlerWithNonGenericInterface>();
+            .AddSingletonHandler<HandlerWithNonGenericInterface>();
 
         var provider = services.BuildServiceProvider();
         var handler = provider.GetService<IRequestHandler<TestRequest, string>>();
@@ -269,12 +269,12 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddStreamHandler_GenericInference_RegistersHandler()
+    public void AddSingletonStreamHandler_GenericInference_RegistersHandler()
     {
         var services = new ServiceCollection();
 
         services.AddMediator()
-            .AddStreamHandler<TestStreamHandler>();
+            .AddSingletonStreamHandler<TestStreamHandler>();
 
         var provider = services.BuildServiceProvider();
         var handler = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
@@ -283,12 +283,12 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddStreamHandler_ExplicitTypes_RegistersHandler()
+    public void AddSingletonStreamHandler_ExplicitTypes_RegistersHandler()
     {
         var services = new ServiceCollection();
 
         services.AddMediator()
-            .AddStreamHandler<TestStreamRequest, int, TestStreamHandler>();
+            .AddSingletonStreamHandler<TestStreamRequest, int, TestStreamHandler>();
 
         var provider = services.BuildServiceProvider();
         var handler = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
@@ -297,34 +297,34 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddStreamHandler_NonHandler_ThrowsInvalidOperationException()
+    public void AddSingletonStreamHandler_NonHandler_ThrowsInvalidOperationException()
     {
         var services = new ServiceCollection();
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
-            services.AddMediator().AddStreamHandler<NotAHandler>());
+            services.AddMediator().AddSingletonStreamHandler<NotAHandler>());
 
         Assert.Contains("must implement IStreamRequestHandler", exception.Message);
     }
 
     [Fact]
-    public void AddStreamHandler_MultipleInterfaces_ThrowsInvalidOperationException()
+    public void AddSingletonStreamHandler_MultipleInterfaces_ThrowsInvalidOperationException()
     {
         var services = new ServiceCollection();
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
-            services.AddMediator().AddStreamHandler<MultipleStreamInterfaceHandler>());
+            services.AddMediator().AddSingletonStreamHandler<MultipleStreamInterfaceHandler>());
 
         Assert.Contains("implements multiple IStreamRequestHandler interfaces", exception.Message);
     }
 
     [Fact]
-    public void AddStreamHandler_WithNonGenericInterfaces_IgnoresThemAndRegistersCorrectly()
+    public void AddSingletonStreamHandler_WithNonGenericInterfaces_IgnoresThemAndRegistersCorrectly()
     {
         var services = new ServiceCollection();
 
         services.AddMediator()
-            .AddStreamHandler<StreamHandlerWithNonGenericInterface>();
+            .AddSingletonStreamHandler<StreamHandlerWithNonGenericInterface>();
 
         var provider = services.BuildServiceProvider();
         var handler = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();

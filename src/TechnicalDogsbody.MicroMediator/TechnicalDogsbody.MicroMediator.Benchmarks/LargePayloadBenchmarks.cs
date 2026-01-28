@@ -34,7 +34,7 @@ public class LargePayloadBenchmarks
         // Setup MicroMediator
         var microServices = new ServiceCollection();
         microServices.AddMediator()
-            .AddHandler<LargePayloadQuery, int, LargePayloadQueryHandler>();
+            .AddSingletonHandler<LargePayloadQuery, int, LargePayloadQueryHandler>();
 
         var microProvider = microServices.BuildServiceProvider();
         _microMediator = microProvider.GetRequiredService<IMediator>();

@@ -24,16 +24,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services
     .AddMediator()
     // Query handlers
-    .AddHandler<GetProductByIdQueryHandler>()
-    .AddHandler<SearchProductsQueryHandler>()
-    .AddHandler<GetCustomerOrdersQueryHandler>()
+    .AddTransientHandler<GetProductByIdQueryHandler>()
+    .AddSingletonHandler<SearchProductsQueryHandler>()
+    .AddSingletonHandler<GetCustomerOrdersQueryHandler>()
     // Command handlers
-    .AddHandler<CreateOrderCommandHandler>()
-    .AddHandler<UpdateProductPriceCommandHandler>()
-    .AddHandler<CancelOrderCommandHandler>()
+    .AddSingletonHandler<CreateOrderCommandHandler>()
+    .AddSingletonHandler<UpdateProductPriceCommandHandler>()
+    .AddSingletonHandler<CancelOrderCommandHandler>()
     // Streaming handlers
-    .AddStreamHandler<ExportProductsByCategoryHandler>()
-    .AddStreamHandler<StreamCustomerOrdersHandler>()
+    .AddSingletonStreamHandler<ExportProductsByCategoryHandler>()
+    .AddSingletonStreamHandler<StreamCustomerOrdersHandler>()
     // Validators
     .AddValidator<CreateOrderCommandValidator>()
     .AddValidator<UpdateProductPriceCommandValidator>()

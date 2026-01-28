@@ -12,7 +12,7 @@ public class MediatorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<TestRequest, string, TestRequestHandler>();
+            .AddSingletonHandler<TestRequest, string, TestRequestHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();
@@ -56,7 +56,7 @@ public class MediatorTests
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddHandler<TestRequest, string, TestRequestHandler>();
+            .AddSingletonHandler<TestRequest, string, TestRequestHandler>();
 
         var provider = services.BuildServiceProvider();
         var mediator = provider.GetRequiredService<IMediator>();

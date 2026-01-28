@@ -31,8 +31,8 @@ public class ProductStreamingBenchmarks
     {
         var services = new ServiceCollection();
         services.AddMediator()
-            .AddStreamHandler<StreamProductsQuery, Product, StreamProductsHandler>()
-            .AddHandler<LoadProductsQuery, List<Product>, LoadProductsHandler>();
+            .AddSingletonStreamHandler<StreamProductsQuery, Product, StreamProductsHandler>()
+            .AddSingletonHandler<LoadProductsQuery, List<Product>, LoadProductsHandler>();
 
         var provider = services.BuildServiceProvider();
         _mediator = provider.GetRequiredService<IMediator>();

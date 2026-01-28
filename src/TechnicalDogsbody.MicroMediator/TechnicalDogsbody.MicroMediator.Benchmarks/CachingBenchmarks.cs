@@ -28,7 +28,7 @@ public class CachingBenchmarks
         simpleServices.AddMemoryCache();
         simpleServices
             .AddMediator()
-            .AddHandler<CachedQuery, int, CachedQueryHandler>()
+            .AddSingletonHandler<CachedQuery, int, CachedQueryHandler>()
             .AddDefaultCachingPipeline();
 
         _simpleMediatorProvider = simpleServices.BuildServiceProvider();

@@ -12,6 +12,7 @@ A lightweight, high-performance mediator pattern implementation for .NET with bu
 - **Fast execution** - Optimised request handling with ValueTask and aggressive caching
 - **Low memory footprint** - Minimal allocations through efficient dispatch mechanisms
 - **Native streaming** - Built-in `IAsyncEnumerable<T>` support for large datasets
+- **Explicit handler lifetimes** - Choose Singleton, Scoped, or Transient for each handler
 - **Fluent configuration** - Clean, readable service registration
 - **Built-in behaviours** - Validation, logging, and caching out of the box
 - **AOT compatible** - Minimal reflection, explicit registration available
@@ -36,37 +37,35 @@ public record GetProductByIdQuery : IRequest<Product?>
 
 public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, Product?>
 {
+    private readonly IProductRepository _repository;
+
+    public GetProductByIdQueryHandler(IProductRepository repository)
+    {
+        _repository = repository;
+    }
+
     public ValueTask<Product?> HandleAsync(GetProductByIdQuery request, CancellationToken cancellationToken)
     {
         var product = _repository.GetById(request.Id);
         return ValueTask.FromResult(product);
     }
 }
-
-// Command (write operation)
-public record CreateOrderCommand : IRequest<OrderResult>
-{
-    public required string CustomerEmail { get; init; }
-    public List<OrderItem> Items { get; init; } = [];
-}
-
-public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, OrderResult>
-{
-    public async ValueTask<OrderResult> HandleAsync(CreateOrderCommand request, CancellationToken cancellationToken)
-    {
-        var orderId = await _orderService.CreateOrderAsync(request);
-        return OrderResult.Success(orderId);
-    }
-}
 ```
 
-### Register Services
+### Register Services with Explicit Lifetime
 
 ```csharp
 builder.Services
     .AddMediator()
-    .AddHandler<GetProductByIdQueryHandler>()
-    .AddHandler<CreateOrderCommandHandler>()
+    // Singleton - fastest, cached forever (use for stateless handlers)
+    .AddSingletonHandler<GetProductByIdQueryHandler>()
+    
+    // Scoped - for handlers with scoped dependencies (DbContext, HttpContext)
+    .AddScopedHandler<CreateOrderCommandHandler>()
+    
+    // Transient - new instance per request
+    .AddTransientHandler<ProcessPaymentCommandHandler>()
+    
     .AddDefaultLoggingPipeline()
     .AddDefaultCachingPipeline();
 ```
@@ -91,16 +90,56 @@ public class ProductController : ControllerBase
         
         return product is not null ? Ok(product) : NotFound();
     }
-
-    [HttpPost]
-    public async Task<IActionResult> CreateOrder(CreateOrderCommand command)
-    {
-        var result = await _mediator.SendAsync(command);
-        return result.Success 
-            ? Created($"/orders/{result.OrderId}", result)
-            : BadRequest(result);
-    }
 }
+```
+
+## Handler Lifetimes
+
+Choose the appropriate lifetime based on your handler's dependencies:
+
+### Singleton (Recommended for stateless handlers)
+
+```csharp
+.AddSingletonHandler<GetProductByIdQueryHandler>()
+```
+
+- **Performance**: ~24ns per request (cached, fastest)
+- **Use when**: Handler has no dependencies or only singleton dependencies
+- **Memory**: Single instance shared across all requests
+- **Thread safety**: Must be thread-safe
+
+### Scoped (Use for database/HTTP context)
+
+```csharp
+.AddScopedHandler<CreateOrderCommandHandler>()
+```
+
+- **Performance**: ~80-100ns per request in ASP.NET Core
+- **Use when**: Handler depends on scoped services (DbContext, HttpContext, etc.)
+- **Memory**: One instance per request scope
+- **Thread safety**: Not required (single request)
+
+### Transient (Use for per-request state)
+
+```csharp
+.AddTransientHandler<ProcessPaymentCommandHandler>()
+```
+
+- **Performance**: ~80-100ns per request
+- **Use when**: Handler needs unique state per request
+- **Memory**: New instance for every request
+- **Thread safety**: Not required (unique instance)
+
+### Explicit Type Parameters
+
+For AOT compatibility, use explicit type parameters:
+
+```csharp
+builder.Services
+    .AddMediator()
+    .AddSingletonHandler<GetProductQuery, Product, GetProductQueryHandler>()
+    .AddScopedHandler<CreateOrderCommand, OrderResult, CreateOrderCommandHandler>()
+    .AddTransientHandler<ProcessPaymentCommand, PaymentResult, ProcessPaymentCommandHandler>();
 ```
 
 ## Streaming Requests
@@ -120,6 +159,11 @@ public class StreamProductsQueryHandler : IStreamRequestHandler<StreamProductsQu
 {
     private readonly IProductRepository _repository;
 
+    public StreamProductsQueryHandler(IProductRepository repository)
+    {
+        _repository = repository;
+    }
+
     public async IAsyncEnumerable<Product> HandleAsync(
         StreamProductsQuery request,
         [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -137,10 +181,15 @@ public class StreamProductsQueryHandler : IStreamRequestHandler<StreamProductsQu
     }
 }
 
+// Register with appropriate lifetime
+builder.Services
+    .AddMediator()
+    .AddScopedStreamHandler<StreamProductsQueryHandler>(); // Has DbContext dependency
+
 // Process items as they arrive
 var query = new StreamProductsQuery { MinPrice = 50 };
 
-await foreach (var product in _mediator.CreateStream(query))
+await foreach (var product in _mediator.StreamAsync(query))
 {
     Console.WriteLine($"{product.Name}: {product.Price:C}");
 }
@@ -151,7 +200,7 @@ await foreach (var product in _mediator.CreateStream(query))
 ```csharp
 // Process only first 50 matching products
 var expensiveProducts = _mediator
-    .CreateStream(new StreamProductsQuery { MinPrice = 1000 })
+    .StreamAsync(new StreamProductsQuery { MinPrice = 1000 })
     .Take(50);
 
 await foreach (var product in expensiveProducts)
@@ -171,7 +220,7 @@ var total = allProducts.Sum(p => p.Price);
 
 // Streaming: Processes one at a time (~15 KB peak memory)
 var total = 0m;
-await foreach (var product in _mediator.CreateStream(new StreamProductsQuery()))
+await foreach (var product in _mediator.StreamAsync(new StreamProductsQuery()))
 {
     total += product.Price;
 }
@@ -196,7 +245,7 @@ public record GetProductByIdQuery : IRequest<Product?>, ICacheableRequest
 ```csharp
 builder.Services
     .AddMediator()
-    .AddHandler<GetProductByIdQueryHandler>()
+    .AddSingletonHandler<GetProductByIdQueryHandler>()
     .AddDefaultCachingPipeline(); // Uses IMemoryCache
 ```
 
@@ -270,7 +319,7 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 
 builder.Services
     .AddMediator()
-    .AddHandler<CreateOrderCommandHandler>()
+    .AddScopedHandler<CreateOrderCommandHandler>()
     .AddValidator<CreateOrderCommandValidator>(); // Adds ValidationBehavior
 ```
 
@@ -326,7 +375,7 @@ Behaviours execute in reverse order of registration (last registered runs first)
 ```csharp
 builder.Services
     .AddMediator()
-    .AddHandler<MyHandler>()
+    .AddScopedHandler<MyHandler>()
     .AddValidator<MyValidator>()           // 3. Validates (innermost)
     .AddDefaultLoggingPipeline()           // 2. Logs
     .AddBehavior(typeof(RetryBehavior<,>)); // 1. Retries (outermost)
@@ -334,26 +383,16 @@ builder.Services
 
 Request flow: `RetryBehavior` → `LoggingBehavior` → `ValidationBehavior` → `Handler`
 
-## AOT Compatibility
-
-Use explicit type parameters for zero reflection:
-
-```csharp
-builder.Services
-    .AddMediator()
-    .AddHandler<GetProductQuery, Product, GetProductQueryHandler>()
-    .AddValidator<CreateOrderCommand, CreateOrderCommandValidator>();
-```
-
 ## Use Cases
 
 MicroMediator fits well for:
 
 - **Serverless environments** - Fast cold starts and low memory usage
-- **High-throughput APIs** - Efficient request processing
+- **High-throughput APIs** - Efficient request processing with singleton handlers
 - **Memory-constrained systems** - Minimal allocations
 - **CQRS implementations** - Clean separation of commands and queries
 - **Large dataset processing** - Native streaming support
+- **Web applications** - Proper scoped dependency support (DbContext, HttpContext)
 - **Commercial projects** - MIT licence with no restrictions
 
 ## Architecture
@@ -363,7 +402,7 @@ MicroMediator uses a wrapper pattern with dynamic dispatch and aggressive cachin
 1. **Static generic caching** - Each response type gets its own dictionary
 2. **ConcurrentDictionary** - Lock-free reads after first request
 3. **Wrapper instances** - Created once per request type
-4. **Handler caching** - Eliminates DI lookups on hot path
+4. **Lifetime-aware caching** - Singleton handlers cached, scoped/transient resolved per-request
 5. **ValueTask** - Zero-allocation synchronous completions
 
 ## Examples
@@ -371,6 +410,7 @@ MicroMediator uses a wrapper pattern with dynamic dispatch and aggressive cachin
 The `TechnicalDogsbody.MicroMediator.Examples` project demonstrates:
 
 - CQRS pattern with queries and commands
+- Handler lifetime management (Singleton, Scoped, Transient)
 - FluentValidation integration
 - Request caching with custom providers
 - Streaming large datasets
@@ -387,7 +427,7 @@ dotnet run
 
 ## Benchmarks
 
-The benchmark suite measures performance across various scenarios. All benchmarks run on .NET 10.0 to showcase peak performance characteristics.
+The benchmark suite measures performance across various scenarios. All benchmarks run on .NET 10.0 to showcase peak performance characteristics. The library targets .NET 8.0, 9.0, and 10.0.
 
 Run benchmarks:
 
@@ -396,7 +436,7 @@ cd benchmarks
 dotnet run -c Release
 ```
 
-### Core Performance
+### Core Performance (Singleton Handlers)
 
 | Scenario | Time (ns) | Memory |
 |----------|-----------|--------|
@@ -406,12 +446,20 @@ dotnet run -c Release
 | Cache Hit | 105 | 272 B |
 | Cache Miss | 1,527 | 648 B |
 
+### Handler Lifetime Performance
+
+| Lifetime | Time | Notes |
+|----------|------|-------|
+| Singleton | ~24ns | Cached, zero DI overhead |
+| Transient | ~80-100ns | DI resolution per request |
+| Scoped | ~80-100ns | DI resolution per request (ASP.NET Core) |
+
 ### Throughput (10,000 requests)
 
-| Mode | Time | Memory | Notes |
-|------|------|--------|-------|
-| Sequential | 181 μs | 234 KB | 2.6x faster than alternatives |
-| Parallel | 344 μs | 1,133 KB | 1.9x faster than alternatives |
+| Mode | Time | Memory |
+|------|------|--------|
+| Sequential | 181 μs | 234 KB |
+| Parallel | 344 μs | 1,133 KB |
 
 ### Streaming Performance (5,000 items)
 

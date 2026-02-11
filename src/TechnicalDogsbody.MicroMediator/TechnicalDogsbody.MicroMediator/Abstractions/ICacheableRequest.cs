@@ -16,4 +16,12 @@ public interface ICacheableRequest
     /// Gets the cache duration. If null, defaults to 5 minutes.
     /// </summary>
     TimeSpan? CacheDuration { get; }
+
+    /// <summary>
+    /// Configures provider-specific cache options before storing in cache.
+    /// Override this method to set options like tags, priority, or other provider-specific features.
+    /// The default implementation does nothing.
+    /// </summary>
+    /// <param name="context">Provider-specific cache context to configure.</param>
+    void ConfigureCache(ICacheContext context) { }
 }

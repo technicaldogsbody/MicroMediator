@@ -149,6 +149,101 @@ public class MemoryCacheProviderTests
         Assert.Null(value);
     }
 
+    [Fact]
+    public void Set_WithNullConfigure_StoresValueWithDefaultDuration()
+    {
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var provider = new MemoryCacheProvider(cache);
+
+        provider.Set("test-key", "test-value", TimeSpan.FromMinutes(5), configure: null);
+
+        bool result = provider.TryGet<string>("test-key", out string? value);
+
+        Assert.True(result);
+        Assert.Equal("test-value", value);
+    }
+
+    [Fact]
+    public void Set_WithSlidingExpiration_ExpiresAfterInactivity()
+    {
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var provider = new MemoryCacheProvider(cache);
+
+        provider.Set("test-key", "test-value", TimeSpan.FromMinutes(5), context =>
+        {
+            if (context is MemoryCacheContext memory)
+            {
+                memory.SlidingExpiration = TimeSpan.FromMilliseconds(50);
+            }
+        });
+
+        Thread.Sleep(100);
+
+        bool result = provider.TryGet<string>("test-key", out string? value);
+
+        Assert.False(result);
+        Assert.Null(value);
+    }
+
+    [Fact]
+    public void Set_WithAbsoluteExpiration_ExpiresAtSpecifiedTime()
+    {
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var provider = new MemoryCacheProvider(cache);
+
+        provider.Set("test-key", "test-value", TimeSpan.FromMinutes(5), context =>
+        {
+            if (context is MemoryCacheContext memory)
+            {
+                memory.AbsoluteExpiration = DateTimeOffset.UtcNow.AddMilliseconds(50);
+            }
+        });
+
+        Thread.Sleep(100);
+
+        bool result = provider.TryGet<string>("test-key", out string? value);
+
+        Assert.False(result);
+        Assert.Null(value);
+    }
+
+    [Fact]
+    public void Set_WithPriority_StoresValue()
+    {
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var provider = new MemoryCacheProvider(cache);
+
+        provider.Set("test-key", "test-value", TimeSpan.FromMinutes(5), context =>
+        {
+            if (context is MemoryCacheContext memory)
+            {
+                memory.Priority = CacheItemPriority.High;
+            }
+        });
+
+        bool result = provider.TryGet<string>("test-key", out string? value);
+
+        Assert.True(result);
+        Assert.Equal("test-value", value);
+    }
+
+    [Fact]
+    public void Set_WithNonMemoryCacheContext_IgnoresConfiguration()
+    {
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var provider = new MemoryCacheProvider(cache);
+
+        provider.Set("test-key", "test-value", TimeSpan.FromMinutes(5), context =>
+        {
+            // Context won't be MemoryCacheContext, should be ignored
+        });
+
+        bool result = provider.TryGet<string>("test-key", out string? value);
+
+        Assert.True(result);
+        Assert.Equal("test-value", value);
+    }
+
     [ExcludeFromCodeCoverage]
     private class TestData
     {

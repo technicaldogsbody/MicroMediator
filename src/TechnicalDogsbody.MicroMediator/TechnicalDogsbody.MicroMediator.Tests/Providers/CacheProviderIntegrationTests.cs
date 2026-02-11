@@ -146,5 +146,7 @@ public class CacheProviderIntegrationTests
             SetCallCount++;
             _cache[cacheKey] = value!;
         }
+
+        public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration, Action<ICacheContext>? configure) => Set(cacheKey, value, duration);
     }
 }

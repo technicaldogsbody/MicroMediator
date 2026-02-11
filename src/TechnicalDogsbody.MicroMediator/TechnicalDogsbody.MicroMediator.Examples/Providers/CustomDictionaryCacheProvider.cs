@@ -47,6 +47,8 @@ public sealed class CustomDictionaryCacheProvider(ILogger<CustomDictionaryCacheP
             cacheKey, entry.ExpiresAt);
     }
 
+    public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration, Action<ICacheContext>? configure) => Set(cacheKey, value, duration);
+
     private sealed class CacheEntry
     {
         public required object Value { get; init; }

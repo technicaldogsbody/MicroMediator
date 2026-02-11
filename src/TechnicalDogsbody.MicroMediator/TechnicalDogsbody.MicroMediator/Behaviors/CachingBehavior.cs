@@ -42,7 +42,7 @@ where TRequest : IRequest<TResponse>
         var response = await next();
 
         var duration = cacheableRequest.CacheDuration ?? TimeSpan.FromMinutes(5);
-        _cacheProvider.Set(cacheKey, response, duration);
+        _cacheProvider.Set(cacheKey, response, duration, cacheableRequest.ConfigureCache);
 
         return response;
     }

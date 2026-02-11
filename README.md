@@ -249,6 +249,39 @@ builder.Services
     .AddDefaultCachingPipeline(); // Uses IMemoryCache
 ```
 
+### Provider-Specific Cache Configuration
+
+Configure provider-specific options like tags, priority, or sliding expiration through `ConfigureCache`:
+
+```csharp
+public record GetProductByIdQuery : IRequest<Product?>, ICacheableRequest
+{
+    public int Id { get; init; }
+    public string Category { get; init; }
+    
+    public string CacheKey => $"product-{Id}";
+    public TimeSpan? CacheDuration => TimeSpan.FromMinutes(10);
+    
+    public void ConfigureCache(ICacheContext context)
+    {
+        // IMemoryCache configuration
+        if (context is MemoryCacheContext memory)
+        {
+            memory.Priority = CacheItemPriority.High;
+            memory.SlidingExpiration = TimeSpan.FromMinutes(5);
+        }
+        
+        // FusionCache configuration
+        if (context is FusionCacheContext fusion)
+        {
+            fusion.Tags.Add("products");
+            fusion.Tags.Add($"category-{Category}");
+            fusion.Priority = CachePriority.High;
+        }
+    }
+}
+```
+
 ### Custom Cache Providers
 
 Swap in FusionCache, Redis, or any custom implementation through `ICacheProvider`:
@@ -266,9 +299,15 @@ builder.Services
     .AddBehavior(typeof(CachingBehavior<,>));
 ```
 
-**FusionCache Example**
+**FusionCache Example with Tagging**
 
 ```csharp
+public class FusionCacheContext : ICacheContext
+{
+    public List<string> Tags { get; init; } = new();
+    public CachePriority? Priority { get; set; }
+}
+
 public class FusionCacheProvider : ICacheProvider
 {
     private readonly IFusionCache _cache;
@@ -293,7 +332,54 @@ public class FusionCacheProvider : ICacheProvider
     
     public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration)
     {
-        _cache.Set(cacheKey, value, duration);
+        var options = new FusionCacheEntryOptions(duration);
+        _cache.Set(cacheKey, value, options);
+    }
+    
+    public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration, Action<ICacheContext>? configure)
+    {
+        var context = new FusionCacheContext();
+        configure?.Invoke(context);
+        
+        var options = new FusionCacheEntryOptions(duration);
+        
+        if (context.Tags.Count > 0)
+            options.SetTags(context.Tags.ToArray());
+            
+        if (context.Priority.HasValue)
+            options.SetPriority(context.Priority.Value);
+            
+        _cache.Set(cacheKey, value, options);
+    }
+}
+
+// Evict all products from cache by tag
+_cache.RemoveByTag("products");
+
+// Evict specific category
+_cache.RemoveByTag("category-electronics");
+```
+
+**Memory Cache Configuration**
+
+The default `MemoryCacheProvider` supports:
+- `Priority` - Cache eviction priority under memory pressure
+- `SlidingExpiration` - Remove if not accessed within timespan
+- `AbsoluteExpiration` - Remove at specific time
+
+```csharp
+public void ConfigureCache(ICacheContext context)
+{
+    if (context is MemoryCacheContext memory)
+    {
+        // High priority items evicted last under memory pressure
+        memory.Priority = CacheItemPriority.High;
+        
+        // Remove after 5 minutes of no access
+        memory.SlidingExpiration = TimeSpan.FromMinutes(5);
+        
+        // Or remove at specific time
+        memory.AbsoluteExpiration = DateTimeOffset.UtcNow.AddHours(1);
     }
 }
 ```
@@ -485,6 +571,19 @@ Key findings:
 - **Memory scaling** - Memory usage stays constant regardless of total dataset size
 - **Linear performance** - Processing time scales linearly with items consumed, not total size
 - **Bounded operations** - Take/limit operations maintain low memory even with massive datasets
+
+## Cache Provider Features
+
+| Feature | IMemoryCache | FusionCache | Redis |
+|---------|-------------|-------------|-------|
+| Basic caching | ✓ | ✓ | ✓ |
+| Tagging | ✗ | ✓ | ✓ |
+| Priority | ✓ | ✓ | ✗ |
+| Sliding expiration | ✓ | ✓ | ✓ |
+| Distributed | ✗ | ✓ | ✓ |
+| Fail-safe | ✗ | ✓ | ✗ |
+
+Providers ignore unsupported configuration gracefully. Requests work with any provider without code changes.
 
 ## Requirements
 

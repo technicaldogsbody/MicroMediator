@@ -9,8 +9,5 @@ using System.Diagnostics.CodeAnalysis;
 [ExcludeFromCodeCoverage]
 internal class Program
 {
-    internal static void Main()
-    {
-        var _ = BenchmarkRunner.Run(typeof(Program).Assembly);
-    }
+    internal static void Main() => _ = BenchmarkRunner.Run(typeof(Program).Assembly);
 }

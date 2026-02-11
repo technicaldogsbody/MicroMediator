@@ -175,6 +175,46 @@ public class CachingBehaviorTests
         public ValueTask<string> HandleAsync(CustomDurationRequest request, CancellationToken cancellationToken) => ValueTask.FromResult($"Handled: {request.Value}");
     }
 
+    [Fact]
+    public async Task HandleAsync_CacheableRequestWithConfiguration_UsesConfiguration()
+    {
+        var services = new ServiceCollection();
+        services.AddMemoryCache();
+        services.AddMediator()
+            .AddSingletonHandler<ConfigurableCacheRequest, string, ConfigurableCacheRequestHandler>()
+            .AddDefaultCachingPipeline();
+
+        var provider = services.BuildServiceProvider();
+        var mediator = provider.GetRequiredService<IMediator>();
+
+        string result = await mediator.SendAsync(new ConfigurableCacheRequest { Value = "test" });
+
+        Assert.Equal("Handled: test", result);
+    }
+
+    [ExcludeFromCodeCoverage]
+    private record ConfigurableCacheRequest : IRequest<string>, ICacheableRequest
+    {
+        public required string Value { get; init; }
+        public string CacheKey => $"Configurable-{Value}";
+        public TimeSpan? CacheDuration => TimeSpan.FromMinutes(10);
+
+        public void ConfigureCache(ICacheContext context)
+        {
+            if (context is TechnicalDogsbody.MicroMediator.Providers.MemoryCacheContext memory)
+            {
+                memory.Priority = CacheItemPriority.High;
+                memory.SlidingExpiration = TimeSpan.FromMinutes(5);
+            }
+        }
+    }
+
+    [ExcludeFromCodeCoverage]
+    private class ConfigurableCacheRequestHandler : IRequestHandler<ConfigurableCacheRequest, string>
+    {
+        public ValueTask<string> HandleAsync(ConfigurableCacheRequest request, CancellationToken cancellationToken) => ValueTask.FromResult($"Handled: {request.Value}");
+    }
+
     [ExcludeFromCodeCoverage]
     private class CountingHandler<TRequest, TResponse>(Func<TRequest, TResponse> handler)
         : IRequestHandler<TRequest, TResponse>

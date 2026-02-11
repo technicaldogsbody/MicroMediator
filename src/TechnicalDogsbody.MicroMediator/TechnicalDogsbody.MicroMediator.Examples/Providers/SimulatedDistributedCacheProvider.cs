@@ -76,6 +76,8 @@ public sealed class SimulatedDistributedCacheProvider : ICacheProvider
         }
     }
 
+    public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration, Action<ICacheContext>? configure) => Set(cacheKey, value, duration);
+
     private sealed class CachedItem
     {
         public required object Value { get; init; }

@@ -355,6 +355,186 @@ public class ServiceCollectionExtensionsTests
             services.AddMediator().AddStreamBehavior(null!));
     }
 
+    [Fact]
+    public void AddTransientHandler_GenericInference_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddTransientHandler<TestHandler>();
+
+        var provider = services.BuildServiceProvider();
+        var handler1 = provider.GetService<IRequestHandler<TestRequest, string>>();
+        var handler2 = provider.GetService<IRequestHandler<TestRequest, string>>();
+
+        Assert.NotNull(handler1);
+        Assert.NotNull(handler2);
+        Assert.NotSame(handler1, handler2);
+    }
+
+    [Fact]
+    public void AddScopedHandler_GenericInference_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddScopedHandler<TestHandler>();
+
+        var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var handler = scope.ServiceProvider.GetService<IRequestHandler<TestRequest, string>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddTransientHandler_ExplicitTypes_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddTransientHandler<TestRequest, string, TestHandler>();
+
+        var provider = services.BuildServiceProvider();
+        var handler = provider.GetService<IRequestHandler<TestRequest, string>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddScopedHandler_ExplicitTypes_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddScopedHandler<TestRequest, string, TestHandler>();
+
+        var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var handler = scope.ServiceProvider.GetService<IRequestHandler<TestRequest, string>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddTransientStreamHandler_GenericInference_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddTransientStreamHandler<TestStreamHandler>();
+
+        var provider = services.BuildServiceProvider();
+        var handler1 = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
+        var handler2 = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
+
+        Assert.NotNull(handler1);
+        Assert.NotNull(handler2);
+        Assert.NotSame(handler1, handler2);
+    }
+
+    [Fact]
+    public void AddScopedStreamHandler_GenericInference_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddScopedStreamHandler<TestStreamHandler>();
+
+        var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var handler = scope.ServiceProvider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddTransientStreamHandler_ExplicitTypes_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddTransientStreamHandler<TestStreamRequest, int, TestStreamHandler>();
+
+        var provider = services.BuildServiceProvider();
+        var handler = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddScopedStreamHandler_ExplicitTypes_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddScopedStreamHandler<TestStreamRequest, int, TestStreamHandler>();
+
+        var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+        var handler = scope.ServiceProvider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
+
+        Assert.NotNull(handler);
+    }
+
+#pragma warning disable CS0618 // Type or member is obsolete
+    [Fact]
+    public void AddHandler_ObsoleteGenericInference_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddHandler<TestHandler>();
+
+        var provider = services.BuildServiceProvider();
+        var handler = provider.GetService<IRequestHandler<TestRequest, string>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddHandler_ObsoleteExplicitTypes_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddHandler<TestRequest, string, TestHandler>();
+
+        var provider = services.BuildServiceProvider();
+        var handler = provider.GetService<IRequestHandler<TestRequest, string>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddStreamHandler_ObsoleteGenericInference_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddStreamHandler<TestStreamHandler>();
+
+        var provider = services.BuildServiceProvider();
+        var handler = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
+
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public void AddStreamHandler_ObsoleteExplicitTypes_RegistersHandler()
+    {
+        var services = new ServiceCollection();
+
+        services.AddMediator()
+            .AddStreamHandler<TestStreamRequest, int, TestStreamHandler>();
+
+        var provider = services.BuildServiceProvider();
+        var handler = provider.GetService<IStreamRequestHandler<TestStreamRequest, int>>();
+
+        Assert.NotNull(handler);
+    }
+#pragma warning restore CS0618 // Type or member is obsolete
+
     [ExcludeFromCodeCoverage]
     private record TestRequest : IRequest<string>
     {
@@ -459,6 +639,8 @@ public class ServiceCollectionExtensionsTests
         }
 
         public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration) => _cache[cacheKey] = value!;
+
+        public void Set<TResponse>(string cacheKey, TResponse value, TimeSpan duration, Action<ICacheContext>? configure) => Set(cacheKey, value, duration);
     }
 
     // Streaming test types

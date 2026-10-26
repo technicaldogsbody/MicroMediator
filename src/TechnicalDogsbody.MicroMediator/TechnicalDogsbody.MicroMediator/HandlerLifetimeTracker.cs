@@ -13,16 +13,10 @@ internal static class HandlerLifetimeTracker
     /// <summary>
     /// Registers a handler type with its lifetime.
     /// </summary>
-    public static void RegisterHandler(Type handlerInterfaceType, ServiceLifetime lifetime)
-    {
-        _handlerLifetimes.TryAdd(handlerInterfaceType, lifetime);
-    }
+    public static void RegisterHandler(Type handlerInterfaceType, ServiceLifetime lifetime) => _handlerLifetimes.TryAdd(handlerInterfaceType, lifetime);
 
     /// <summary>
     /// Gets the lifetime for a handler type. Returns null if not registered.
     /// </summary>
-    public static ServiceLifetime? GetLifetime(Type handlerInterfaceType)
-    {
-        return _handlerLifetimes.TryGetValue(handlerInterfaceType, out var lifetime) ? lifetime : null;
-    }
+    public static ServiceLifetime? GetLifetime(Type handlerInterfaceType) => _handlerLifetimes.TryGetValue(handlerInterfaceType, out var lifetime) ? lifetime : null;
 }

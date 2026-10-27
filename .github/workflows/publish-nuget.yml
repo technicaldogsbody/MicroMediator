@@ -13,7 +13,10 @@ on:
 jobs:
   publish:
     runs-on: windows-latest
-    
+    permissions:
+      contents: read
+      id-token: write # GitHub OIDC token for nuget.org trusted publishing
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -24,7 +27,6 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
-        dotnet-quality: 'preview'
     
     - name: Set version from input or tag
       id: set_version
@@ -50,13 +52,19 @@ jobs:
     - name: Pack
       run: dotnet pack src/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator/TechnicalDogsbody.MicroMediator.csproj --configuration Release --no-build --output ./packages /p:Version=${{ steps.set_version.outputs.VERSION }}
     
+    - name: NuGet login (OIDC trusted publishing)
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
     - name: Push to NuGet
       shell: pwsh
       run: |
         $packages = Get-ChildItem -Path ./packages -Filter *.nupkg
         foreach ($package in $packages) {
           Write-Host "Publishing $($package.Name)..."
-          dotnet nuget push $package.FullName --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push $package.FullName --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
         }
     
     - name: Upload package artifact

@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="assets/logo.jpg" alt="MicroMediator" width="240" />
-</p>
+![MicroMediator](https://raw.githubusercontent.com/technicaldogsbody/MicroMediator/refs/heads/main/assets/logo-banner.png)
 
 # TechnicalDogsbody.MicroMediator
 

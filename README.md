@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.jpg" alt="MicroMediator" width="240" />
+</p>
+
 # TechnicalDogsbody.MicroMediator
 
 [![Build and Test](https://github.com/technicaldogsbody/MicroMediator/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/technicaldogsbody/MicroMediator/actions/workflows/build-and-test.yml)
